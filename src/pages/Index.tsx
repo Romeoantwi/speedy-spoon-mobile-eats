@@ -3,34 +3,62 @@ import { useState } from "react";
 import Header from "@/components/Header";
 import MenuSection from "@/components/MenuSection";
 import Cart from "@/components/Cart";
-import { CartItem, FoodItem } from "@/types/food";
+import { CartItem, FoodItem, CustomizationOption } from "@/types/food";
 
 const Index = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
-  const addToCart = (item: FoodItem) => {
+  const addToCart = (item: FoodItem, selectedCustomizations: CustomizationOption[] = [], quantity: number = 1) => {
+    const customizationPrice = selectedCustomizations.reduce((total, c) => total + c.price, 0);
+    const totalPrice = (item.price + customizationPrice) * quantity;
+
     setCartItems(prev => {
-      const existingItem = prev.find(cartItem => cartItem.id === item.id);
-      if (existingItem) {
-        return prev.map(cartItem =>
-          cartItem.id === item.id
-            ? { ...cartItem, quantity: cartItem.quantity + 1 }
+      const existingItemIndex = prev.findIndex(cartItem => 
+        cartItem.id === item.id && 
+        JSON.stringify(cartItem.selectedCustomizations) === JSON.stringify(selectedCustomizations)
+      );
+      
+      if (existingItemIndex !== -1) {
+        return prev.map((cartItem, index) =>
+          index === existingItemIndex
+            ? { 
+                ...cartItem, 
+                quantity: cartItem.quantity + quantity,
+                totalPrice: cartItem.totalPrice + totalPrice
+              }
             : cartItem
         );
       }
-      return [...prev, { ...item, quantity: 1 }];
+      
+      return [...prev, { 
+        ...item, 
+        quantity, 
+        selectedCustomizations,
+        totalPrice
+      }];
     });
   };
 
-  const updateQuantity = (id: number, quantity: number) => {
+  const updateQuantity = (id: number, quantity: number, selectedCustomizations?: CustomizationOption[]) => {
     if (quantity === 0) {
-      setCartItems(prev => prev.filter(item => item.id !== id));
+      setCartItems(prev => prev.filter(item => 
+        !(item.id === id && JSON.stringify(item.selectedCustomizations) === JSON.stringify(selectedCustomizations))
+      ));
     } else {
       setCartItems(prev =>
-        prev.map(item =>
-          item.id === id ? { ...item, quantity } : item
-        )
+        prev.map(item => {
+          if (item.id === id && JSON.stringify(item.selectedCustomizations) === JSON.stringify(selectedCustomizations)) {
+            const customizationPrice = item.selectedCustomizations?.reduce((total, c) => total + c.price, 0) || 0;
+            const unitPrice = item.price + customizationPrice;
+            return { 
+              ...item, 
+              quantity,
+              totalPrice: unitPrice * quantity
+            };
+          }
+          return item;
+        })
       );
     }
   };
@@ -40,7 +68,7 @@ const Index = () => {
   };
 
   const getTotalPrice = () => {
-    return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+    return cartItems.reduce((total, item) => total + item.totalPrice, 0);
   };
 
   return (

@@ -8,7 +8,7 @@ interface CartProps {
   items: CartItem[];
   isOpen: boolean;
   onClose: () => void;
-  onUpdateQuantity: (id: number, quantity: number) => void;
+  onUpdateQuantity: (id: number, quantity: number, selectedCustomizations?: any[]) => void;
   total: number;
 }
 
@@ -49,20 +49,25 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, total }: CartProps) =>
             </div>
           ) : (
             <div className="space-y-4">
-              {items.map((item) => (
-                <div key={item.id} className="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
+              {items.map((item, index) => (
+                <div key={`${item.id}-${index}`} className="flex items-start space-x-4 p-3 bg-gray-50 rounded-lg">
                   <img
                     src={item.image}
                     alt={item.name}
-                    className="w-16 h-16 object-cover rounded-lg"
+                    className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
                   />
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-gray-800">{item.name}</h3>
-                    <p className="text-orange-600 font-bold">${item.price}</p>
+                    {item.selectedCustomizations && item.selectedCustomizations.length > 0 && (
+                      <div className="text-xs text-gray-600 mt-1">
+                        {item.selectedCustomizations.map(c => c.name).join(', ')}
+                      </div>
+                    )}
+                    <p className="text-orange-600 font-bold">${item.totalPrice.toFixed(2)}</p>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 flex-shrink-0">
                     <Button
-                      onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
+                      onClick={() => onUpdateQuantity(item.id, item.quantity - 1, item.selectedCustomizations)}
                       variant="outline"
                       size="icon"
                       className="w-8 h-8"
@@ -71,7 +76,7 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, total }: CartProps) =>
                     </Button>
                     <span className="w-8 text-center font-semibold">{item.quantity}</span>
                     <Button
-                      onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
+                      onClick={() => onUpdateQuantity(item.id, item.quantity + 1, item.selectedCustomizations)}
                       variant="outline"
                       size="icon"
                       className="w-8 h-8"

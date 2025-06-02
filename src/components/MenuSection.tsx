@@ -1,11 +1,11 @@
-
 import { useState } from "react";
-import { FoodItem, MenuCategory } from "@/types/food";
+import { FoodItem, MenuCategory, CustomizationOption } from "@/types/food";
 import FoodCard from "./FoodCard";
+import FoodDetailsModal from "./FoodDetailsModal";
 import { Button } from "@/components/ui/button";
 
 interface MenuSectionProps {
-  onAddToCart: (item: FoodItem) => void;
+  onAddToCart: (item: FoodItem, selectedCustomizations?: CustomizationOption[], quantity?: number) => void;
 }
 
 const menuData: MenuCategory[] = [
@@ -21,7 +21,13 @@ const menuData: MenuCategory[] = [
         image: "https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?auto=format&fit=crop&w=500",
         category: "appetizers",
         rating: 4.8,
-        prepTime: "15-20 min"
+        prepTime: "15-20 min",
+        customizations: [
+          { id: "sauce1", name: "Extra Spicy Sauce", price: 0.50, category: "sauce" },
+          { id: "sauce2", name: "BBQ Sauce", price: 0.50, category: "sauce" },
+          { id: "side1", name: "Celery Sticks", price: 2.00, category: "side" },
+          { id: "side2", name: "Blue Cheese Dip", price: 1.50, category: "side" }
+        ]
       },
       {
         id: 2,
@@ -31,7 +37,13 @@ const menuData: MenuCategory[] = [
         image: "https://images.unsplash.com/photo-1513456852971-30c0b8199d4d?auto=format&fit=crop&w=500",
         category: "appetizers",
         rating: 4.6,
-        prepTime: "10-15 min"
+        prepTime: "10-15 min",
+        customizations: [
+          { id: "topping1", name: "Extra Cheese", price: 1.50, category: "topping" },
+          { id: "topping2", name: "Guacamole", price: 2.00, category: "topping" },
+          { id: "topping3", name: "Jalapeños", price: 0.75, category: "topping" },
+          { id: "side3", name: "Sour Cream", price: 1.00, category: "side" }
+        ]
       }
     ]
   },
@@ -47,7 +59,15 @@ const menuData: MenuCategory[] = [
         image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=500",
         category: "mains",
         rating: 4.9,
-        prepTime: "20-25 min"
+        prepTime: "20-25 min",
+        customizations: [
+          { id: "topping4", name: "Extra Cheese", price: 1.50, category: "topping" },
+          { id: "topping5", name: "Bacon", price: 2.50, category: "topping" },
+          { id: "topping6", name: "Avocado", price: 2.00, category: "topping" },
+          { id: "side4", name: "French Fries", price: 3.50, category: "side" },
+          { id: "side5", name: "Onion Rings", price: 4.00, category: "side" },
+          { id: "drink1", name: "Soft Drink", price: 2.50, category: "drink" }
+        ]
       },
       {
         id: 4,
@@ -57,7 +77,14 @@ const menuData: MenuCategory[] = [
         image: "https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?auto=format&fit=crop&w=500",
         category: "mains",
         rating: 4.7,
-        prepTime: "25-30 min"
+        prepTime: "25-30 min",
+        customizations: [
+          { id: "topping7", name: "Extra Cheese", price: 2.00, category: "topping" },
+          { id: "topping8", name: "Pepperoni", price: 3.00, category: "topping" },
+          { id: "topping9", name: "Mushrooms", price: 1.50, category: "topping" },
+          { id: "topping10", name: "Olives", price: 1.50, category: "topping" },
+          { id: "side6", name: "Garlic Bread", price: 4.50, category: "side" }
+        ]
       },
       {
         id: 5,
@@ -67,7 +94,13 @@ const menuData: MenuCategory[] = [
         image: "https://images.unsplash.com/photo-1467003909585-2f8a72700288?auto=format&fit=crop&w=500",
         category: "mains",
         rating: 4.8,
-        prepTime: "25-30 min"
+        prepTime: "25-30 min",
+        customizations: [
+          { id: "side7", name: "Rice Pilaf", price: 3.00, category: "side" },
+          { id: "side8", name: "Mashed Potatoes", price: 3.50, category: "side" },
+          { id: "sauce3", name: "Lemon Butter Sauce", price: 1.50, category: "sauce" },
+          { id: "extra1", name: "Extra Vegetables", price: 2.00, category: "extra" }
+        ]
       }
     ]
   },
@@ -117,8 +150,21 @@ const menuData: MenuCategory[] = [
 
 const MenuSection = ({ onAddToCart }: MenuSectionProps) => {
   const [activeCategory, setActiveCategory] = useState("appetizers");
+  const [selectedItem, setSelectedItem] = useState<FoodItem | null>(null);
 
   const currentCategory = menuData.find(cat => cat.id === activeCategory);
+
+  const handleFoodCardClick = (item: FoodItem) => {
+    if (item.customizations && item.customizations.length > 0) {
+      setSelectedItem(item);
+    } else {
+      onAddToCart(item);
+    }
+  };
+
+  const handleModalAddToCart = (item: FoodItem, selectedCustomizations: CustomizationOption[], quantity: number) => {
+    onAddToCart(item, selectedCustomizations, quantity);
+  };
 
   return (
     <section className="mb-12">
@@ -148,10 +194,18 @@ const MenuSection = ({ onAddToCart }: MenuSectionProps) => {
           <FoodCard
             key={item.id}
             item={item}
-            onAddToCart={() => onAddToCart(item)}
+            onAddToCart={() => handleFoodCardClick(item)}
           />
         ))}
       </div>
+
+      {/* Food Details Modal */}
+      <FoodDetailsModal
+        item={selectedItem!}
+        isOpen={!!selectedItem}
+        onClose={() => setSelectedItem(null)}
+        onAddToCart={handleModalAddToCart}
+      />
     </section>
   );
 };

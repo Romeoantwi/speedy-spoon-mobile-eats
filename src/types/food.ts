@@ -1,4 +1,11 @@
 
+export interface CustomizationOption {
+  id: string;
+  name: string;
+  price: number;
+  category: 'topping' | 'side' | 'drink' | 'sauce' | 'extra';
+}
+
 export interface FoodItem {
   id: number;
   name: string;
@@ -8,10 +15,13 @@ export interface FoodItem {
   category: string;
   rating: number;
   prepTime: string;
+  customizations?: CustomizationOption[];
 }
 
 export interface CartItem extends FoodItem {
   quantity: number;
+  selectedCustomizations?: CustomizationOption[];
+  totalPrice: number;
 }
 
 export interface MenuCategory {
