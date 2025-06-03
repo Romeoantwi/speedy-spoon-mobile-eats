@@ -1,8 +1,13 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import MenuSection from "@/components/MenuSection";
 import Cart from "@/components/Cart";
+import NotificationCenter from "@/components/NotificationCenter";
+import LocationMap from "@/components/LocationMap";
 import { CartItem, FoodItem, CustomizationOption } from "@/types/food";
+import { Button } from "@/components/ui/button";
+import { Truck } from "lucide-react";
 
 const Index = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
@@ -10,7 +15,8 @@ const Index = () => {
 
   const addToCart = (item: FoodItem, selectedCustomizations: CustomizationOption[] = [], quantity: number = 1) => {
     const customizationPrice = selectedCustomizations.reduce((total, c) => total + c.price, 0);
-    const totalPrice = (item.price + customizationPrice) * quantity;
+    const deliveryFee = 5;
+    const totalPrice = (item.price + customizationPrice + deliveryFee) * quantity;
 
     setCartItems(prev => {
       const existingItemIndex = prev.findIndex(cartItem => 
@@ -49,7 +55,8 @@ const Index = () => {
         prev.map(item => {
           if (item.id === id && JSON.stringify(item.selectedCustomizations) === JSON.stringify(selectedCustomizations)) {
             const customizationPrice = item.selectedCustomizations?.reduce((total, c) => total + c.price, 0) || 0;
-            const unitPrice = item.price + customizationPrice;
+            const deliveryFee = 5;
+            const unitPrice = item.price + customizationPrice + deliveryFee;
             return { 
               ...item, 
               quantity,
@@ -86,12 +93,33 @@ const Index = () => {
           <h1 className="text-4xl md:text-6xl font-bold text-gray-800 mb-4">
             Welcome to <span className="text-orange-600">SpeedySpoon</span>
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Fast, fresh, and delicious food delivered right to your doorstep
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-6">
+            Fast, fresh, and delicious Ghanaian food delivered right to your doorstep
           </p>
+          
+          {/* Driver Signup Button */}
+          <Link to="/driver-signup">
+            <Button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3">
+              <Truck className="w-5 h-5 mr-2" />
+              Become a Driver
+            </Button>
+          </Link>
         </div>
 
         <MenuSection onAddToCart={addToCart} />
+        
+        {/* Demo sections for notifications and map */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-12">
+          <div>
+            <h3 className="text-2xl font-bold text-gray-800 mb-4">Restaurant Notifications</h3>
+            <NotificationCenter userType="restaurant" />
+          </div>
+          
+          <div>
+            <h3 className="text-2xl font-bold text-gray-800 mb-4">Delivery Tracking</h3>
+            <LocationMap showDriverLocation={true} orderStatus="picked_up" />
+          </div>
+        </div>
       </main>
 
       <Cart

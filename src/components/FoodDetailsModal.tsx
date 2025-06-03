@@ -15,7 +15,7 @@ const FoodDetailsModal = ({ item, isOpen, onClose, onAddToCart }: FoodDetailsMod
   const [quantity, setQuantity] = useState(1);
   const [selectedCustomizations, setSelectedCustomizations] = useState<CustomizationOption[]>([]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !item) return null;
 
   const handleCustomizationToggle = (customization: CustomizationOption) => {
     setSelectedCustomizations(prev => {
@@ -30,7 +30,8 @@ const FoodDetailsModal = ({ item, isOpen, onClose, onAddToCart }: FoodDetailsMod
 
   const getTotalPrice = () => {
     const customizationPrice = selectedCustomizations.reduce((total, c) => total + c.price, 0);
-    return (item.price + customizationPrice) * quantity;
+    const deliveryFee = 5; // Fixed delivery fee
+    return (item.price + customizationPrice + deliveryFee) * quantity;
   };
 
   const handleAddToCart = () => {
@@ -39,14 +40,6 @@ const FoodDetailsModal = ({ item, isOpen, onClose, onAddToCart }: FoodDetailsMod
     setQuantity(1);
     setSelectedCustomizations([]);
   };
-
-  const groupedCustomizations = item.customizations?.reduce((acc, customization) => {
-    if (!acc[customization.category]) {
-      acc[customization.category] = [];
-    }
-    acc[customization.category].push(customization);
-    return acc;
-  }, {} as Record<string, CustomizationOption[]>) || {};
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
@@ -70,19 +63,22 @@ const FoodDetailsModal = ({ item, isOpen, onClose, onAddToCart }: FoodDetailsMod
         <div className="p-6">
           <h2 className="text-2xl font-bold text-gray-800 mb-2">{item.name}</h2>
           <p className="text-gray-600 mb-4">{item.description}</p>
-          <p className="text-2xl font-bold text-orange-600 mb-6">${item.price}</p>
+          <div className="mb-4">
+            <p className="text-xl font-bold text-orange-600">₵{item.price}</p>
+            <p className="text-sm text-gray-500">+ ₵5 delivery fee</p>
+          </div>
 
-          {/* Customization Options */}
-          {Object.entries(groupedCustomizations).map(([category, options]) => (
-            <div key={category} className="mb-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-3 capitalize">
-                {category}s
+          {/* Extras Section */}
+          {item.customizations && item.customizations.length > 0 && (
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-3">
+                Add Extras
               </h3>
-              <div className="space-y-2">
-                {options.map((customization) => (
+              <div className="space-y-3">
+                {item.customizations.map((customization) => (
                   <div
                     key={customization.id}
-                    className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 cursor-pointer"
+                    className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
                     onClick={() => handleCustomizationToggle(customization)}
                   >
                     <div className="flex items-center space-x-3">
@@ -90,18 +86,18 @@ const FoodDetailsModal = ({ item, isOpen, onClose, onAddToCart }: FoodDetailsMod
                         type="checkbox"
                         checked={selectedCustomizations.some(c => c.id === customization.id)}
                         onChange={() => handleCustomizationToggle(customization)}
-                        className="w-4 h-4 text-orange-600 rounded"
+                        className="w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
                       />
-                      <span className="font-medium">{customization.name}</span>
+                      <span className="font-medium text-gray-800">{customization.name}</span>
                     </div>
                     <span className="text-orange-600 font-semibold">
-                      +${customization.price}
+                      +₵{customization.price}
                     </span>
                   </div>
                 ))}
               </div>
             </div>
-          ))}
+          )}
 
           {/* Quantity Selector */}
           <div className="flex items-center justify-between mb-6">
@@ -133,7 +129,7 @@ const FoodDetailsModal = ({ item, isOpen, onClose, onAddToCart }: FoodDetailsMod
             className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 text-lg"
           >
             <ShoppingCart className="w-5 h-5 mr-2" />
-            Add to Cart - ${getTotalPrice().toFixed(2)}
+            Add to Cart - ₵{getTotalPrice().toFixed(2)}
           </Button>
         </div>
       </div>

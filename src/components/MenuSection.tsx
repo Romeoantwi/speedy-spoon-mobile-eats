@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { FoodItem, MenuCategory, CustomizationOption } from "@/types/food";
 import FoodCard from "./FoodCard";
@@ -10,146 +11,79 @@ interface MenuSectionProps {
 
 const menuData: MenuCategory[] = [
   {
-    id: "appetizers",
-    name: "Appetizers",
+    id: "main-dishes",
+    name: "Main Dishes",
     items: [
       {
         id: 1,
-        name: "Crispy Chicken Wings",
-        description: "Juicy wings with our signature spicy sauce",
-        price: 12.99,
-        image: "https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?auto=format&fit=crop&w=500",
-        category: "appetizers",
-        rating: 4.8,
-        prepTime: "15-20 min",
+        name: "Assorted Jollof with Chicken and Salad",
+        description: "Traditional Ghanaian jollof rice with assorted chicken pieces and fresh salad",
+        price: 35,
+        image: "https://images.unsplash.com/photo-1604329760661-e71dc83f8f26?auto=format&fit=crop&w=500",
+        category: "main-dishes",
+        rating: 4.9,
+        prepTime: "25-30 min",
         customizations: [
-          { id: "sauce1", name: "Extra Spicy Sauce", price: 0.50, category: "sauce" },
-          { id: "sauce2", name: "BBQ Sauce", price: 0.50, category: "sauce" },
-          { id: "side1", name: "Celery Sticks", price: 2.00, category: "side" },
-          { id: "side2", name: "Blue Cheese Dip", price: 1.50, category: "side" }
+          { id: "egg1", name: "Egg", price: 4, category: "extra" },
+          { id: "chicken1", name: "Extra Chicken", price: 15, category: "extra" },
+          { id: "gizzard1", name: "Gizzard", price: 10, category: "extra" },
+          { id: "plantain1", name: "Fried Plantain (3 pieces)", price: 5, category: "extra" }
         ]
       },
       {
         id: 2,
-        name: "Loaded Nachos",
-        description: "Crispy chips topped with cheese, jalapeños, and sour cream",
-        price: 10.99,
-        image: "https://images.unsplash.com/photo-1513456852971-30c0b8199d4d?auto=format&fit=crop&w=500",
-        category: "appetizers",
-        rating: 4.6,
-        prepTime: "10-15 min",
+        name: "Assorted Fried Rice",
+        description: "Delicious fried rice with assorted meat and vegetables",
+        price: 35,
+        image: "https://images.unsplash.com/photo-1603133872878-684f208fb84b?auto=format&fit=crop&w=500",
+        category: "main-dishes",
+        rating: 4.8,
+        prepTime: "25-30 min",
         customizations: [
-          { id: "topping1", name: "Extra Cheese", price: 1.50, category: "topping" },
-          { id: "topping2", name: "Guacamole", price: 2.00, category: "topping" },
-          { id: "topping3", name: "Jalapeños", price: 0.75, category: "topping" },
-          { id: "side3", name: "Sour Cream", price: 1.00, category: "side" }
+          { id: "egg2", name: "Egg", price: 4, category: "extra" },
+          { id: "chicken2", name: "Extra Chicken", price: 15, category: "extra" },
+          { id: "gizzard2", name: "Gizzard", price: 10, category: "extra" },
+          { id: "plantain2", name: "Fried Plantain (3 pieces)", price: 5, category: "extra" }
         ]
-      }
-    ]
-  },
-  {
-    id: "mains",
-    name: "Main Courses",
-    items: [
+      },
       {
         id: 3,
-        name: "SpeedySpoon Burger",
-        description: "Our signature beef burger with fresh lettuce, tomato, and special sauce",
-        price: 15.99,
-        image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=500",
-        category: "mains",
-        rating: 4.9,
+        name: "Assorted Noodles",
+        description: "Tasty noodles with assorted meat and spices",
+        price: 30,
+        image: "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=500",
+        category: "main-dishes",
+        rating: 4.7,
         prepTime: "20-25 min",
         customizations: [
-          { id: "topping4", name: "Extra Cheese", price: 1.50, category: "topping" },
-          { id: "topping5", name: "Bacon", price: 2.50, category: "topping" },
-          { id: "topping6", name: "Avocado", price: 2.00, category: "topping" },
-          { id: "side4", name: "French Fries", price: 3.50, category: "side" },
-          { id: "side5", name: "Onion Rings", price: 4.00, category: "side" },
-          { id: "drink1", name: "Soft Drink", price: 2.50, category: "drink" }
+          { id: "egg3", name: "Egg", price: 4, category: "extra" },
+          { id: "chicken3", name: "Extra Chicken", price: 15, category: "extra" },
+          { id: "gizzard3", name: "Gizzard", price: 10, category: "extra" },
+          { id: "sausage3", name: "Sausage", price: 4, category: "extra" }
         ]
       },
       {
         id: 4,
-        name: "Margherita Pizza",
-        description: "Classic pizza with fresh mozzarella, basil, and tomato sauce",
-        price: 18.99,
-        image: "https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?auto=format&fit=crop&w=500",
-        category: "mains",
-        rating: 4.7,
-        prepTime: "25-30 min",
+        name: "Assorted Spaghetti",
+        description: "Classic spaghetti with assorted meat in rich tomato sauce",
+        price: 25,
+        image: "https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?auto=format&fit=crop&w=500",
+        category: "main-dishes",
+        rating: 4.6,
+        prepTime: "20-25 min",
         customizations: [
-          { id: "topping7", name: "Extra Cheese", price: 2.00, category: "topping" },
-          { id: "topping8", name: "Pepperoni", price: 3.00, category: "topping" },
-          { id: "topping9", name: "Mushrooms", price: 1.50, category: "topping" },
-          { id: "topping10", name: "Olives", price: 1.50, category: "topping" },
-          { id: "side6", name: "Garlic Bread", price: 4.50, category: "side" }
+          { id: "egg4", name: "Egg", price: 4, category: "extra" },
+          { id: "chicken4", name: "Extra Chicken", price: 15, category: "extra" },
+          { id: "gizzard4", name: "Gizzard", price: 10, category: "extra" },
+          { id: "sausage4", name: "Sausage", price: 4, category: "extra" }
         ]
-      },
-      {
-        id: 5,
-        name: "Grilled Salmon",
-        description: "Fresh Atlantic salmon with seasonal vegetables and lemon butter",
-        price: 22.99,
-        image: "https://images.unsplash.com/photo-1467003909585-2f8a72700288?auto=format&fit=crop&w=500",
-        category: "mains",
-        rating: 4.8,
-        prepTime: "25-30 min",
-        customizations: [
-          { id: "side7", name: "Rice Pilaf", price: 3.00, category: "side" },
-          { id: "side8", name: "Mashed Potatoes", price: 3.50, category: "side" },
-          { id: "sauce3", name: "Lemon Butter Sauce", price: 1.50, category: "sauce" },
-          { id: "extra1", name: "Extra Vegetables", price: 2.00, category: "extra" }
-        ]
-      }
-    ]
-  },
-  {
-    id: "desserts",
-    name: "Desserts",
-    items: [
-      {
-        id: 6,
-        name: "Chocolate Lava Cake",
-        description: "Warm chocolate cake with molten center and vanilla ice cream",
-        price: 8.99,
-        image: "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?auto=format&fit=crop&w=500",
-        category: "desserts",
-        rating: 4.9,
-        prepTime: "15-20 min"
-      }
-    ]
-  },
-  {
-    id: "drinks",
-    name: "Beverages",
-    items: [
-      {
-        id: 7,
-        name: "Fresh Orange Juice",
-        description: "Freshly squeezed orange juice",
-        price: 4.99,
-        image: "https://images.unsplash.com/photo-1613478223719-2ab802602423?auto=format&fit=crop&w=500",
-        category: "drinks",
-        rating: 4.5,
-        prepTime: "5 min"
-      },
-      {
-        id: 8,
-        name: "Iced Coffee",
-        description: "Cold brew coffee with ice and your choice of milk",
-        price: 3.99,
-        image: "https://images.unsplash.com/photo-1461023058943-07fcbe16d735?auto=format&fit=crop&w=500",
-        category: "drinks",
-        rating: 4.4,
-        prepTime: "5 min"
       }
     ]
   }
 ];
 
 const MenuSection = ({ onAddToCart }: MenuSectionProps) => {
-  const [activeCategory, setActiveCategory] = useState("appetizers");
+  const [activeCategory, setActiveCategory] = useState("main-dishes");
   const [selectedItem, setSelectedItem] = useState<FoodItem | null>(null);
 
   const currentCategory = menuData.find(cat => cat.id === activeCategory);
@@ -164,6 +98,7 @@ const MenuSection = ({ onAddToCart }: MenuSectionProps) => {
 
   const handleModalAddToCart = (item: FoodItem, selectedCustomizations: CustomizationOption[], quantity: number) => {
     onAddToCart(item, selectedCustomizations, quantity);
+    setSelectedItem(null);
   };
 
   return (
