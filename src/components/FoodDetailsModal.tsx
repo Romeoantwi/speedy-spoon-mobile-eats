@@ -18,23 +18,33 @@ const FoodDetailsModal = ({ item, isOpen, onClose, onAddToCart }: FoodDetailsMod
   if (!isOpen || !item) return null;
 
   const handleCustomizationToggle = (customization: CustomizationOption) => {
+    console.log('Toggling customization:', customization);
+    
     setSelectedCustomizations(prev => {
       const exists = prev.find(c => c.id === customization.id);
+      let newCustomizations;
+      
       if (exists) {
-        return prev.filter(c => c.id !== customization.id);
+        newCustomizations = prev.filter(c => c.id !== customization.id);
+        console.log('Removed customization:', customization.name);
       } else {
-        return [...prev, customization];
+        newCustomizations = [...prev, customization];
+        console.log('Added customization:', customization.name);
       }
+      
+      console.log('New customizations:', newCustomizations);
+      return newCustomizations;
     });
   };
 
   const getTotalPrice = () => {
     const customizationPrice = selectedCustomizations.reduce((total, c) => total + c.price, 0);
-    const deliveryFee = 5; // Fixed delivery fee
+    const deliveryFee = 5;
     return (item.price + customizationPrice + deliveryFee) * quantity;
   };
 
   const handleAddToCart = () => {
+    console.log('Adding to cart with customizations:', selectedCustomizations);
     onAddToCart(item, selectedCustomizations, quantity);
     onClose();
     setQuantity(1);
@@ -75,24 +85,52 @@ const FoodDetailsModal = ({ item, isOpen, onClose, onAddToCart }: FoodDetailsMod
                 Add Extras
               </h3>
               <div className="space-y-3">
-                {item.customizations.map((customization) => (
-                  <div
-                    key={customization.id}
-                    className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
-                    onClick={() => handleCustomizationToggle(customization)}
-                  >
-                    <div className="flex items-center space-x-3">
-                      <input
-                        type="checkbox"
-                        checked={selectedCustomizations.some(c => c.id === customization.id)}
-                        onChange={() => handleCustomizationToggle(customization)}
-                        className="w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
-                      />
-                      <span className="font-medium text-gray-800">{customization.name}</span>
+                {item.customizations.map((customization) => {
+                  const isSelected = selectedCustomizations.some(c => c.id === customization.id);
+                  
+                  return (
+                    <div
+                      key={customization.id}
+                      className={`flex items-center justify-between p-3 border rounded-lg cursor-pointer transition-all ${
+                        isSelected 
+                          ? 'bg-orange-50 border-orange-200 ring-2 ring-orange-500' 
+                          : 'hover:bg-gray-50 border-gray-200'
+                      }`}
+                      onClick={() => handleCustomizationToggle(customization)}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
+                          isSelected 
+                            ? 'bg-orange-500 border-orange-500' 
+                            : 'border-gray-300'
+                        }`}>
+                          {isSelected && (
+                            <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          )}
+                        </div>
+                        <span className="font-medium text-gray-800">{customization.name}</span>
+                      </div>
+                      <span className="text-orange-600 font-semibold">
+                        +₵{customization.price}
+                      </span>
                     </div>
-                    <span className="text-orange-600 font-semibold">
-                      +₵{customization.price}
-                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Selected Extras Summary */}
+          {selectedCustomizations.length > 0 && (
+            <div className="mb-4 p-3 bg-orange-50 rounded-lg">
+              <h4 className="font-medium text-gray-800 mb-2">Selected Extras:</h4>
+              <div className="space-y-1">
+                {selectedCustomizations.map((custom) => (
+                  <div key={custom.id} className="flex justify-between text-sm">
+                    <span>{custom.name}</span>
+                    <span>+₵{custom.price}</span>
                   </div>
                 ))}
               </div>
