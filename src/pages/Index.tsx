@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import Header from "@/components/Header";
 import MenuSection from "@/components/MenuSection";
@@ -63,6 +62,10 @@ const Index = () => {
     }
   };
 
+  const clearCart = () => {
+    setCartItems([]);
+  };
+
   const getTotalItems = () => {
     return cartItems.reduce((total, item) => total + item.quantity, 0);
   };
@@ -96,6 +99,7 @@ const Index = () => {
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
         onUpdateQuantity={updateQuantity}
+        onClearCart={clearCart}
         total={getTotalPrice()}
       />
     </div>
