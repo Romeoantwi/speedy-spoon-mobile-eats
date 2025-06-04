@@ -4,6 +4,7 @@ import Header from "@/components/Header";
 import MenuSection from "@/components/MenuSection";
 import Cart from "@/components/Cart";
 import { CartItem, FoodItem, CustomizationOption } from "@/types/food";
+import { formatCurrencyShort } from "@/utils/currency";
 
 const Customer = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
@@ -11,7 +12,7 @@ const Customer = () => {
 
   const addToCart = (item: FoodItem, selectedCustomizations: CustomizationOption[] = [], quantity: number = 1) => {
     const customizationPrice = selectedCustomizations.reduce((total, c) => total + c.price, 0);
-    const deliveryFee = 5;
+    const deliveryFee = 5; // GH₵ 5.00 delivery fee
     const totalPrice = (item.price + customizationPrice + deliveryFee) * quantity;
 
     setCartItems(prev => {
@@ -51,7 +52,7 @@ const Customer = () => {
         prev.map(item => {
           if (item.id === id && JSON.stringify(item.selectedCustomizations) === JSON.stringify(selectedCustomizations)) {
             const customizationPrice = item.selectedCustomizations?.reduce((total, c) => total + c.price, 0) || 0;
-            const deliveryFee = 5;
+            const deliveryFee = 5; // GH₵ 5.00 delivery fee
             const unitPrice = item.price + customizationPrice + deliveryFee;
             return { 
               ...item, 
@@ -93,6 +94,12 @@ const Customer = () => {
           <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-6">
             Fast, fresh, and delicious Ghanaian food delivered right to your doorstep
           </p>
+          <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 inline-block">
+            <p className="text-gray-700">
+              🚚 <span className="font-semibold">Delivery Fee:</span> {formatCurrencyShort(5.00)} 
+              <span className="text-sm text-gray-500 ml-2">All prices in Ghanaian Cedis</span>
+            </p>
+          </div>
         </div>
 
         <MenuSection onAddToCart={addToCart} />
