@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -53,7 +52,14 @@ const PaymentMethods = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setPaymentMethods(data || []);
+      
+      // Type cast the data to match our interface
+      const typedData = (data || []).map(item => ({
+        ...item,
+        type: item.type as PaymentMethod['type']
+      }));
+      
+      setPaymentMethods(typedData);
     } catch (error) {
       console.error('Error fetching payment methods:', error);
     }

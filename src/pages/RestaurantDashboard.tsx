@@ -42,16 +42,20 @@ const RestaurantDashboard = () => {
         { event: 'INSERT', schema: 'public', table: 'orders' },
         (payload) => {
           console.log('🍽️ New order received!', payload);
-          setOrders(prev => [payload.new as Order, ...prev]);
+          const newOrder = {
+            ...payload.new,
+            items: typeof payload.new.items === 'string' ? JSON.parse(payload.new.items) : payload.new.items
+          } as Order;
+          setOrders(prev => [newOrder, ...prev]);
           
           toast({
             title: "New Order Received! 🍽️",
-            description: `Order #${(payload.new as Order).id.slice(-8)} - ${formatCurrency((payload.new as Order).total_amount)}`,
+            description: `Order #${newOrder.id.slice(-8)} - ${formatCurrency(newOrder.total_amount)}`,
           });
           
           // Automatically confirm the order after 30 seconds (demo purposes)
           setTimeout(() => {
-            updateOrderStatus((payload.new as Order).id, 'confirmed');
+            updateOrderStatus(newOrder.id, 'confirmed');
           }, 30000);
         }
       )
@@ -73,20 +77,26 @@ const RestaurantDashboard = () => {
 
       if (error) throw error;
       
-      setOrders(data || []);
+      // Parse the items JSON field
+      const parsedOrders = (data || []).map(order => ({
+        ...order,
+        items: typeof order.items === 'string' ? JSON.parse(order.items) : order.items
+      }));
+      
+      setOrders(parsedOrders);
       
       // Calculate stats
       const today = new Date().toDateString();
-      const todayOrders = data?.filter(order => 
+      const todayOrders = parsedOrders.filter(order => 
         new Date(order.created_at).toDateString() === today
-      ) || [];
+      );
       
       setStats({
         todayOrders: todayOrders.length,
         todayRevenue: todayOrders.reduce((sum, order) => sum + Number(order.total_amount), 0),
-        pendingOrders: data?.filter(order => 
+        pendingOrders: parsedOrders.filter(order => 
           ['placed', 'confirmed', 'preparing'].includes(order.status)
-        ).length || 0,
+        ).length,
         avgPrepTime: 25
       });
       

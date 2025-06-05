@@ -30,13 +30,13 @@ export const useOrderManagement = () => {
 
       const totalAmount = cartItems.reduce((sum, item) => sum + item.totalPrice, 0);
 
-      // Insert order into database
+      // Insert order into database - convert orderItems to JSON
       const { data: orderData, error: orderError } = await supabase
         .from('orders')
         .insert({
           customer_id: user.id,
           restaurant_id: 'speedyspoon-main',
-          items: orderItems,
+          items: JSON.stringify(orderItems),
           total_amount: totalAmount,
           delivery_fee: 5.00,
           status: 'placed',
