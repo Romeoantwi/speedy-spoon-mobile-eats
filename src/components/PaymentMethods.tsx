@@ -4,299 +4,239 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { CreditCard, Plus, Trash2, Star } from 'lucide-react';
+import { Trash2, Plus, CreditCard } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 interface PaymentMethod {
   id: string;
-  type: 'bank_transfer' | 'mtn_momo' | 'airtel_money' | 'tigo_cash' | 'telecel_cash';
+  type: 'mtn_momo' | 'airteltigo_money' | 'telecel_cash' | 'bank_transfer' | 'cash';
   provider_name: string;
   account_number: string;
   account_name: string;
   is_default: boolean;
-  is_active: boolean;
 }
 
 const PaymentMethods = () => {
   const { toast } = useToast();
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
-  const [isAdding, setIsAdding] = useState(false);
-  const [newMethod, setNewMethod] = useState({
-    type: 'mtn_momo' as const,
-    provider_name: '',
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [formData, setFormData] = useState({
+    type: 'mtn_momo' as PaymentMethod['type'],
+    provider_name: 'MTN Mobile Money',
     account_number: '',
     account_name: '',
     is_default: false
   });
 
-  const paymentTypeLabels = {
-    bank_transfer: 'Bank Transfer',
-    mtn_momo: 'MTN Mobile Money',
-    airtel_money: 'AirtelTigo Money',
-    tigo_cash: 'Tigo Cash',
-    telecel_cash: 'Telecel Cash'
-  };
-
-  const paymentTypeColors = {
-    bank_transfer: 'bg-blue-100 text-blue-800',
-    mtn_momo: 'bg-yellow-100 text-yellow-800',
-    airtel_money: 'bg-red-100 text-red-800',
-    tigo_cash: 'bg-green-100 text-green-800',
-    telecel_cash: 'bg-purple-100 text-purple-800'
-  };
+  const paymentOptions = [
+    { value: 'mtn_momo', label: 'MTN Mobile Money', provider: 'MTN Ghana' },
+    { value: 'airteltigo_money', label: 'AirtelTigo Money', provider: 'AirtelTigo' },
+    { value: 'telecel_cash', label: 'Telecel Cash', provider: 'Telecel Ghana' },
+    { value: 'bank_transfer', label: 'Bank Transfer', provider: 'Bank' },
+    { value: 'cash', label: 'Cash on Delivery', provider: 'Cash' }
+  ];
 
   useEffect(() => {
     fetchPaymentMethods();
   }, []);
 
   const fetchPaymentMethods = async () => {
-    const { data, error } = await supabase
-      .from('payment_methods')
-      .select('*')
-      .eq('is_active', true)
-      .order('is_default', { ascending: false });
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-    if (error) {
+      const { data, error } = await supabase
+        .from('payment_methods')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setPaymentMethods(data || []);
+    } catch (error) {
       console.error('Error fetching payment methods:', error);
-      return;
     }
-
-    setPaymentMethods(data || []);
   };
 
   const addPaymentMethod = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No user found');
 
-    const { error } = await supabase
-      .from('payment_methods')
-      .insert({
-        ...newMethod,
-        user_id: user.id
+      const { error } = await supabase
+        .from('payment_methods')
+        .insert({
+          user_id: user.id,
+          type: formData.type,
+          provider_name: formData.provider_name,
+          account_number: formData.account_number,
+          account_name: formData.account_name,
+          is_default: formData.is_default
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Payment Method Added! 💳",
+        description: "Your payment method has been added successfully."
       });
 
-    if (error) {
+      setFormData({
+        type: 'mtn_momo',
+        provider_name: 'MTN Mobile Money',
+        account_number: '',
+        account_name: '',
+        is_default: false
+      });
+      setShowAddForm(false);
+      fetchPaymentMethods();
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to add payment method. Please try again.",
+        description: error.message || "Failed to add payment method",
         variant: "destructive"
       });
-      return;
     }
-
-    toast({
-      title: "Success",
-      description: "Payment method added successfully!"
-    });
-
-    setIsAdding(false);
-    setNewMethod({
-      type: 'mtn_momo',
-      provider_name: '',
-      account_number: '',
-      account_name: '',
-      is_default: false
-    });
-    fetchPaymentMethods();
   };
 
   const deletePaymentMethod = async (id: string) => {
-    const { error } = await supabase
-      .from('payment_methods')
-      .update({ is_active: false })
-      .eq('id', id);
+    try {
+      const { error } = await supabase
+        .from('payment_methods')
+        .delete()
+        .eq('id', id);
 
-    if (error) {
+      if (error) throw error;
+
+      toast({
+        title: "Payment Method Removed",
+        description: "Payment method has been deleted successfully."
+      });
+
+      fetchPaymentMethods();
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to remove payment method.",
+        description: error.message || "Failed to delete payment method",
         variant: "destructive"
       });
-      return;
     }
-
-    toast({
-      title: "Success",
-      description: "Payment method removed successfully!"
-    });
-    fetchPaymentMethods();
   };
 
-  const setAsDefault = async (id: string) => {
-    // First, unset all defaults
-    await supabase
-      .from('payment_methods')
-      .update({ is_default: false })
-      .neq('id', id);
-
-    // Then set the selected one as default
-    const { error } = await supabase
-      .from('payment_methods')
-      .update({ is_default: true })
-      .eq('id', id);
-
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to set default payment method.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    toast({
-      title: "Success",
-      description: "Default payment method updated!"
+  const handleTypeChange = (type: PaymentMethod['type']) => {
+    const option = paymentOptions.find(opt => opt.value === type);
+    setFormData({
+      ...formData,
+      type,
+      provider_name: option?.provider || ''
     });
-    fetchPaymentMethods();
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-800">Payment Methods</h2>
-        <Button onClick={() => setIsAdding(true)} className="bg-orange-500 hover:bg-orange-600">
-          <Plus className="w-4 h-4 mr-2" />
-          Add Payment Method
-        </Button>
-      </div>
+    <Card className="w-full max-w-2xl mx-auto">
+      <CardHeader>
+        <CardTitle className="flex items-center">
+          <CreditCard className="w-5 h-5 mr-2" />
+          Payment Methods
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {paymentMethods.length === 0 ? (
+          <p className="text-gray-500 text-center py-8">No payment methods added yet</p>
+        ) : (
+          <div className="space-y-3">
+            {paymentMethods.map((method) => (
+              <div key={method.id} className="flex items-center justify-between p-3 border rounded-lg">
+                <div>
+                  <p className="font-medium">{paymentOptions.find(opt => opt.value === method.type)?.label}</p>
+                  <p className="text-sm text-gray-600">{method.account_number} - {method.account_name}</p>
+                  {method.is_default && (
+                    <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Default</span>
+                  )}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => deletePaymentMethod(method.id)}
+                  className="text-red-600 hover:text-red-800"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
 
-      {isAdding && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Add New Payment Method</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        {!showAddForm ? (
+          <Button
+            onClick={() => setShowAddForm(true)}
+            className="w-full"
+            variant="outline"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Payment Method
+          </Button>
+        ) : (
+          <div className="space-y-4 p-4 border rounded-lg">
             <div>
-              <Label htmlFor="type">Payment Type</Label>
+              <Label htmlFor="payment-type">Payment Type</Label>
               <select
-                id="type"
-                value={newMethod.type}
-                onChange={(e) => setNewMethod({ ...newMethod, type: e.target.value as any })}
+                id="payment-type"
+                value={formData.type}
+                onChange={(e) => handleTypeChange(e.target.value as PaymentMethod['type'])}
                 className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
               >
-                {Object.entries(paymentTypeLabels).map(([value, label]) => (
-                  <option key={value} value={value}>{label}</option>
+                {paymentOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
                 ))}
               </select>
             </div>
 
-            <div>
-              <Label htmlFor="provider_name">Provider Name</Label>
-              <Input
-                id="provider_name"
-                value={newMethod.provider_name}
-                onChange={(e) => setNewMethod({ ...newMethod, provider_name: e.target.value })}
-                placeholder="e.g., MTN Ghana, Access Bank"
-              />
-            </div>
+            {formData.type !== 'cash' && (
+              <>
+                <div>
+                  <Label htmlFor="account-number">
+                    {formData.type === 'bank_transfer' ? 'Account Number' : 'Phone Number'}
+                  </Label>
+                  <Input
+                    id="account-number"
+                    value={formData.account_number}
+                    onChange={(e) => setFormData({ ...formData, account_number: e.target.value })}
+                    placeholder={formData.type === 'bank_transfer' ? '1234567890' : '0XX XXX XXXX'}
+                  />
+                </div>
 
-            <div>
-              <Label htmlFor="account_number">Account/Phone Number</Label>
-              <Input
-                id="account_number"
-                value={newMethod.account_number}
-                onChange={(e) => setNewMethod({ ...newMethod, account_number: e.target.value })}
-                placeholder="0XX XXX XXXX or Account Number"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="account_name">Account Name</Label>
-              <Input
-                id="account_name"
-                value={newMethod.account_name}
-                onChange={(e) => setNewMethod({ ...newMethod, account_name: e.target.value })}
-                placeholder="Full name on account"
-              />
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="is_default"
-                checked={newMethod.is_default}
-                onChange={(e) => setNewMethod({ ...newMethod, is_default: e.target.checked })}
-                className="rounded"
-              />
-              <Label htmlFor="is_default">Set as default payment method</Label>
-            </div>
+                <div>
+                  <Label htmlFor="account-name">Account Name</Label>
+                  <Input
+                    id="account-name"
+                    value={formData.account_name}
+                    onChange={(e) => setFormData({ ...formData, account_name: e.target.value })}
+                    placeholder="John Doe"
+                  />
+                </div>
+              </>
+            )}
 
             <div className="flex space-x-2">
-              <Button onClick={addPaymentMethod} className="bg-orange-500 hover:bg-orange-600">
-                Add Payment Method
+              <Button onClick={addPaymentMethod} className="flex-1">
+                Add Method
               </Button>
-              <Button 
-                variant="outline" 
-                onClick={() => setIsAdding(false)}
+              <Button
+                variant="outline"
+                onClick={() => setShowAddForm(false)}
+                className="flex-1"
               >
                 Cancel
               </Button>
             </div>
-          </CardContent>
-        </Card>
-      )}
-
-      <div className="grid gap-4">
-        {paymentMethods.map((method) => (
-          <Card key={method.id} className="relative">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <CreditCard className="w-8 h-8 text-gray-600" />
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <Badge className={paymentTypeColors[method.type]}>
-                        {paymentTypeLabels[method.type]}
-                      </Badge>
-                      {method.is_default && (
-                        <Badge variant="outline" className="text-orange-600 border-orange-600">
-                          <Star className="w-3 h-3 mr-1" />
-                          Default
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="font-semibold">{method.provider_name}</p>
-                    <p className="text-sm text-gray-600">{method.account_name}</p>
-                    <p className="text-sm text-gray-500">****{method.account_number.slice(-4)}</p>
-                  </div>
-                </div>
-                <div className="flex space-x-2">
-                  {!method.is_default && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setAsDefault(method.id)}
-                    >
-                      Set Default
-                    </Button>
-                  )}
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => deletePaymentMethod(method.id)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-
-        {paymentMethods.length === 0 && !isAdding && (
-          <Card>
-            <CardContent className="pt-6 text-center">
-              <CreditCard className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600">No payment methods added yet.</p>
-              <p className="text-sm text-gray-500">Add a payment method to complete orders.</p>
-            </CardContent>
-          </Card>
+          </div>
         )}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 

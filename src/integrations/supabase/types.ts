@@ -9,6 +9,51 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      applications: {
+        Row: {
+          cover_letter: string
+          created_at: string
+          email: string
+          experience: string
+          expertise: string
+          full_name: string
+          github: string | null
+          id: string
+          linkedin: string | null
+          phone: string
+          portfolio: string | null
+          status: string | null
+        }
+        Insert: {
+          cover_letter: string
+          created_at?: string
+          email: string
+          experience: string
+          expertise: string
+          full_name: string
+          github?: string | null
+          id?: string
+          linkedin?: string | null
+          phone: string
+          portfolio?: string | null
+          status?: string | null
+        }
+        Update: {
+          cover_letter?: string
+          created_at?: string
+          email?: string
+          experience?: string
+          expertise?: string
+          full_name?: string
+          github?: string | null
+          id?: string
+          linkedin?: string | null
+          phone?: string
+          portfolio?: string | null
+          status?: string | null
+        }
+        Relationships: []
+      }
       conversations: {
         Row: {
           created_at: string
@@ -80,6 +125,54 @@ export type Database = {
           processed_at?: string | null
           upload_date?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      driver_profiles: {
+        Row: {
+          created_at: string
+          current_latitude: number | null
+          current_longitude: number | null
+          id: string
+          is_available: boolean | null
+          license_number: string
+          rating: number | null
+          total_deliveries: number | null
+          updated_at: string
+          user_id: string
+          vehicle_model: string | null
+          vehicle_plate_number: string | null
+          vehicle_type: string
+        }
+        Insert: {
+          created_at?: string
+          current_latitude?: number | null
+          current_longitude?: number | null
+          id?: string
+          is_available?: boolean | null
+          license_number: string
+          rating?: number | null
+          total_deliveries?: number | null
+          updated_at?: string
+          user_id: string
+          vehicle_model?: string | null
+          vehicle_plate_number?: string | null
+          vehicle_type: string
+        }
+        Update: {
+          created_at?: string
+          current_latitude?: number | null
+          current_longitude?: number | null
+          id?: string
+          is_available?: boolean | null
+          license_number?: string
+          rating?: number | null
+          total_deliveries?: number | null
+          updated_at?: string
+          user_id?: string
+          vehicle_model?: string | null
+          vehicle_plate_number?: string | null
+          vehicle_type?: string
         }
         Relationships: []
       }
@@ -204,27 +297,167 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean | null
+          message: string
+          order_id: string | null
+          recipient_id: string
+          sender_id: string | null
+          title: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          message: string
+          order_id?: string | null
+          recipient_id: string
+          sender_id?: string | null
+          title: string
+          type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          order_id?: string | null
+          recipient_id?: string
+          sender_id?: string | null
+          title?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          created_at: string
+          customer_id: string
+          customer_phone: string | null
+          delivery_address: string
+          delivery_fee: number
+          driver_id: string | null
+          estimated_delivery_time: string | null
+          estimated_prep_time: number | null
+          id: string
+          items: Json
+          restaurant_id: string
+          special_instructions: string | null
+          status: string
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          customer_phone?: string | null
+          delivery_address: string
+          delivery_fee?: number
+          driver_id?: string | null
+          estimated_delivery_time?: string | null
+          estimated_prep_time?: number | null
+          id?: string
+          items: Json
+          restaurant_id?: string
+          special_instructions?: string | null
+          status?: string
+          total_amount: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          customer_phone?: string | null
+          delivery_address?: string
+          delivery_fee?: number
+          driver_id?: string | null
+          estimated_delivery_time?: string | null
+          estimated_prep_time?: number | null
+          id?: string
+          items?: Json
+          restaurant_id?: string
+          special_instructions?: string | null
+          status?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      payment_methods: {
+        Row: {
+          account_name: string
+          account_number: string
+          created_at: string
+          id: string
+          is_default: boolean | null
+          provider_name: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          account_name: string
+          account_number: string
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          provider_name: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          account_name?: string
+          account_number?: string
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          provider_name?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
           created_at: string
           full_name: string | null
+          ghana_card_number: string | null
           id: string
+          phone_number: string | null
           updated_at: string
+          user_type: string | null
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string
           full_name?: string | null
+          ghana_card_number?: string | null
           id: string
+          phone_number?: string | null
           updated_at?: string
+          user_type?: string | null
         }
         Update: {
           avatar_url?: string | null
           created_at?: string
           full_name?: string | null
+          ghana_card_number?: string | null
           id?: string
+          phone_number?: string | null
           updated_at?: string
+          user_type?: string | null
         }
         Relationships: []
       }

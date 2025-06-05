@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Truck, MapPin, Clock, Phone, DollarSign, Star } from 'lucide-react';
 import NotificationCenter from '@/components/NotificationCenter';
 import LocationMap from '@/components/LocationMap';
+import { formatCurrency } from '@/utils/currency';
 
 interface Order {
   id: string;
@@ -112,7 +113,7 @@ const DriverDashboard = () => {
                 <DollarSign className="w-8 h-8 text-green-600 mr-3" />
                 <div>
                   <p className="text-sm text-gray-600">Today's Earnings</p>
-                  <p className="text-2xl font-bold text-green-600">₵{earnings.today}</p>
+                  <p className="text-2xl font-bold text-green-600">{formatCurrency(earnings.today)}</p>
                 </div>
               </CardContent>
             </Card>
@@ -178,7 +179,7 @@ const DriverDashboard = () => {
                   </div>
                   
                   <div className="flex items-center justify-between pt-4 border-t">
-                    <span className="font-bold text-lg">₵{currentOrder.total}</span>
+                    <span className="font-bold text-lg">{formatCurrency(currentOrder.total)}</span>
                     <div className="space-x-2">
                       {currentOrder.status === 'accepted' && (
                         <Button onClick={() => updateOrderStatus('picked_up')} className="bg-orange-500 hover:bg-orange-600">
@@ -214,7 +215,7 @@ const DriverDashboard = () => {
                               <p className="text-sm text-gray-600">#{order.id}</p>
                             </div>
                             <div className="text-right">
-                              <p className="font-bold text-lg">₵{order.total}</p>
+                              <p className="font-bold text-lg">{formatCurrency(order.total)}</p>
                               <p className="text-sm text-gray-600">{order.distance} • {order.estimatedTime}</p>
                             </div>
                           </div>

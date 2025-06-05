@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { X, Minus, Plus, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useOrderManagement } from "@/hooks/useOrderManagement";
 import OrderStatusTracker from "./OrderStatusTracker";
 import DeliveryAddressForm from "./DeliveryAddressForm";
+import { formatCurrency } from "@/utils/currency";
 
 interface CartProps {
   items: CartItem[];
@@ -99,7 +101,7 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
                           {item.selectedCustomizations.map(c => c.name).join(', ')}
                         </div>
                       )}
-                      <p className="text-orange-600 font-bold">${item.totalPrice.toFixed(2)}</p>
+                      <p className="text-orange-600 font-bold">{formatCurrency(item.totalPrice)}</p>
                     </div>
                     <div className="flex items-center space-x-2 flex-shrink-0">
                       <Button
@@ -130,7 +132,7 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
             <div className="border-t p-4 space-y-4">
               <div className="flex justify-between items-center text-xl font-bold">
                 <span>Total:</span>
-                <span className="text-orange-600">${total.toFixed(2)}</span>
+                <span className="text-orange-600">{formatCurrency(total)}</span>
               </div>
               <Button
                 onClick={handleCheckout}

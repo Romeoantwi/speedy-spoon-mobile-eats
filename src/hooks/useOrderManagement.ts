@@ -2,54 +2,77 @@
 import { useState } from 'react';
 import { CartItem } from '@/types/food';
 import { Order, OrderItem } from '@/types/order';
+import { supabase } from '@/integrations/supabase/client';
 
 export const useOrderManagement = () => {
   const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
   const [orderStatus, setOrderStatus] = useState<Order['status'] | null>(null);
 
   const createOrder = async (cartItems: CartItem[], deliveryAddress: string): Promise<string> => {
-    // Convert cart items to order items
-    const orderItems: OrderItem[] = cartItems.map(item => ({
-      food_item_id: item.id,
-      name: item.name,
-      price: item.price,
-      quantity: item.quantity,
-      customizations: item.selectedCustomizations?.map(c => ({
-        id: c.id,
-        name: c.name,
-        price: c.price
-      })) || [],
-      total_price: item.totalPrice
-    }));
+    try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No authenticated user');
 
-    const totalAmount = cartItems.reduce((sum, item) => sum + item.totalPrice, 0);
+      // Convert cart items to order items
+      const orderItems: OrderItem[] = cartItems.map(item => ({
+        food_item_id: item.id,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        customizations: item.selectedCustomizations?.map(c => ({
+          id: c.id,
+          name: c.name,
+          price: c.price
+        })) || [],
+        total_price: item.totalPrice
+      }));
 
-    // Create order object
-    const order: Order = {
-      id: generateOrderId(),
-      customer_id: 'temp-customer-id', // Will be replaced with actual user ID from Supabase auth
-      restaurant_id: 'speedyspoon-main',
-      items: orderItems,
-      total_amount: totalAmount,
-      status: 'placed',
-      created_at: new Date().toISOString(),
-      estimated_prep_time: 25, // Base prep time in minutes
-      delivery_address: deliveryAddress
-    };
+      const totalAmount = cartItems.reduce((sum, item) => sum + item.totalPrice, 0);
 
-    // TODO: Save to Supabase database
-    console.log('Order created:', order);
-    
-    setCurrentOrder(order);
-    setOrderStatus('placed');
+      // Insert order into database
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          customer_id: user.id,
+          restaurant_id: 'speedyspoon-main',
+          items: orderItems,
+          total_amount: totalAmount,
+          delivery_fee: 5.00,
+          status: 'placed',
+          delivery_address: deliveryAddress,
+          estimated_prep_time: 25
+        })
+        .select()
+        .single();
 
-    // Simulate restaurant notification
-    setTimeout(() => {
-      console.log('🍽️ Restaurant notified: New order received!');
-      setOrderStatus('preparing');
-    }, 1000);
+      if (orderError) throw orderError;
 
-    return order.id;
+      const order: Order = {
+        id: orderData.id,
+        customer_id: orderData.customer_id,
+        restaurant_id: orderData.restaurant_id,
+        driver_id: orderData.driver_id,
+        items: orderItems,
+        total_amount: orderData.total_amount,
+        status: orderData.status as Order['status'],
+        created_at: orderData.created_at,
+        estimated_prep_time: orderData.estimated_prep_time,
+        delivery_address: orderData.delivery_address,
+        customer_phone: orderData.customer_phone,
+        special_instructions: orderData.special_instructions
+      };
+
+      setCurrentOrder(order);
+      setOrderStatus('placed');
+
+      console.log('🍽️ Order created and sent to restaurant:', order.id);
+
+      return order.id;
+    } catch (error) {
+      console.error('Error creating order:', error);
+      throw error;
+    }
   };
 
   const updateOrderStatus = (newStatus: Order['status']) => {
@@ -57,13 +80,8 @@ export const useOrderManagement = () => {
       setCurrentOrder({ ...currentOrder, status: newStatus });
       setOrderStatus(newStatus);
       
-      // Log status changes
       console.log(`📱 Order status updated: ${newStatus}`);
     }
-  };
-
-  const generateOrderId = (): string => {
-    return 'ORD-' + Date.now().toString(36).toUpperCase();
   };
 
   return {
