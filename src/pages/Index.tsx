@@ -1,136 +1,138 @@
 
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Truck, UtensilsCrossed, Clock, Star, MapPin, Shield } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Truck, Users, Store, Clock, Star, Shield } from "lucide-react";
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50">
       {/* Header */}
-      <header className="bg-white shadow-md border-b">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <div className="bg-orange-500 text-white p-2 rounded-lg">
-                <span className="text-xl font-bold">SS</span>
-              </div>
-              <h1 className="text-2xl font-bold text-gray-800">SpeedySpoon</h1>
+      <header className="container mx-auto px-4 py-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-xl">S</span>
             </div>
+            <span className="text-2xl font-bold text-gray-800">SpeedySpoon</span>
           </div>
+          <nav className="hidden md:flex items-center space-x-6">
+            <a href="#features" className="text-gray-600 hover:text-orange-600">Features</a>
+            <a href="#how-it-works" className="text-gray-600 hover:text-orange-600">How It Works</a>
+            <a href="#about" className="text-gray-600 hover:text-orange-600">About</a>
+          </nav>
         </div>
       </header>
 
+      {/* Hero Section */}
       <main className="container mx-auto px-4 py-12">
-        {/* Hero Section */}
         <div className="text-center mb-16">
           <h1 className="text-5xl md:text-7xl font-bold text-gray-800 mb-6">
-            Welcome to <span className="text-orange-600">SpeedySpoon</span>
+            Hungry? We've Got You Covered!
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-            Ghana's premier food delivery platform. Fast, fresh, and delicious Ghanaian cuisine delivered right to your doorstep with world-class service.
+            Ghana's fastest food delivery service. Fresh, delicious Ghanaian meals delivered to your doorstep in 30 minutes or less.
           </p>
-          
-          {/* User Type Selection */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer border-2 hover:border-orange-200">
-              <CardHeader className="text-center pb-4">
-                <div className="bg-orange-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <UtensilsCrossed className="w-8 h-8 text-orange-600" />
-                </div>
-                <CardTitle className="text-2xl">I'm Hungry!</CardTitle>
-                <p className="text-gray-600">Order delicious Ghanaian food</p>
-              </CardHeader>
-              <CardContent>
-                <Link to="/customer">
-                  <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 text-lg">
-                    Order Food
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer border-2 hover:border-blue-200">
-              <CardHeader className="text-center pb-4">
-                <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Truck className="w-8 h-8 text-blue-600" />
-                </div>
-                <CardTitle className="text-2xl">Deliver & Earn</CardTitle>
-                <p className="text-gray-600">Join our driver community</p>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Link to="/driver-dashboard">
-                  <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3">
-                    Driver Dashboard
-                  </Button>
-                </Link>
-                <Link to="/driver-signup">
-                  <Button variant="outline" className="w-full border-blue-600 text-blue-600 hover:bg-blue-50">
-                    Become a Driver
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
+          <div className="flex flex-col md:flex-row gap-4 justify-center items-center">
+            <Link to="/customer">
+              <Button size="lg" className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-3 text-lg">
+                Order Now 🍽️
+              </Button>
+            </Link>
+            <Link to="/driver-signup">
+              <Button size="lg" variant="outline" className="px-8 py-3 text-lg">
+                Become a Driver 🚗
+              </Button>
+            </Link>
+            <Link to="/restaurant-dashboard">
+              <Button size="lg" variant="outline" className="px-8 py-3 text-lg">
+                Restaurant Portal 🏪
+              </Button>
+            </Link>
           </div>
         </div>
 
         {/* Features Section */}
-        <div className="mb-16">
-          <h2 className="text-3xl font-bold text-center text-gray-800 mb-12">
-            Why Choose SpeedySpoon?
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div className="text-center">
-              <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Clock className="w-8 h-8 text-green-600" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Lightning Fast</h3>
-              <p className="text-gray-600">Average delivery time of 25 minutes</p>
-            </div>
-            
-            <div className="text-center">
-              <div className="bg-yellow-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Star className="w-8 h-8 text-yellow-600" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Top Quality</h3>
-              <p className="text-gray-600">Authentic Ghanaian cuisine from trusted restaurants</p>
-            </div>
-            
-            <div className="text-center">
-              <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <MapPin className="w-8 h-8 text-blue-600" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Real-time Tracking</h3>
-              <p className="text-gray-600">Track your order from kitchen to doorstep</p>
-            </div>
-            
-            <div className="text-center">
-              <div className="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Shield className="w-8 h-8 text-purple-600" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Secure & Safe</h3>
-              <p className="text-gray-600">Ghana Card verification for all drivers</p>
-            </div>
+        <section id="features" className="mb-16">
+          <h2 className="text-3xl font-bold text-center mb-12">Why Choose SpeedySpoon?</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <Card className="text-center p-6">
+              <CardContent>
+                <Clock className="w-12 h-12 text-orange-500 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold mb-2">Lightning Fast</h3>
+                <p className="text-gray-600">Get your food delivered in 30 minutes or less, guaranteed.</p>
+              </CardContent>
+            </Card>
+            <Card className="text-center p-6">
+              <CardContent>
+                <Star className="w-12 h-12 text-orange-500 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold mb-2">Quality Food</h3>
+                <p className="text-gray-600">Fresh, authentic Ghanaian cuisine from the best local restaurants.</p>
+              </CardContent>
+            </Card>
+            <Card className="text-center p-6">
+              <CardContent>
+                <Shield className="w-12 h-12 text-orange-500 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold mb-2">Safe & Secure</h3>
+                <p className="text-gray-600">Secure payments with Mobile Money, bank transfer, and cash options.</p>
+              </CardContent>
+            </Card>
           </div>
-        </div>
+        </section>
 
-        {/* Stats Section */}
-        <div className="bg-white rounded-2xl p-8 shadow-lg">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-            <div>
-              <h3 className="text-4xl font-bold text-orange-600 mb-2">50,000+</h3>
-              <p className="text-gray-600">Happy Customers</p>
+        {/* How It Works */}
+        <section id="how-it-works" className="mb-16">
+          <h2 className="text-3xl font-bold text-center mb-12">How It Works</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl font-bold text-orange-600">1</span>
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Browse & Order</h3>
+              <p className="text-gray-600">Choose from our delicious menu and place your order</p>
             </div>
-            <div>
-              <h3 className="text-4xl font-bold text-blue-600 mb-2">1,200+</h3>
-              <p className="text-gray-600">Verified Drivers</p>
+            <div className="text-center">
+              <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl font-bold text-orange-600">2</span>
+              </div>
+              <h3 className="text-xl font-semibold mb-2">We Prepare</h3>
+              <p className="text-gray-600">Our chefs prepare your meal with fresh ingredients</p>
             </div>
-            <div>
-              <h3 className="text-4xl font-bold text-green-600 mb-2">25 min</h3>
-              <p className="text-gray-600">Average Delivery Time</p>
+            <div className="text-center">
+              <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl font-bold text-orange-600">3</span>
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Fast Delivery</h3>
+              <p className="text-gray-600">Your order is delivered hot and fresh to your door</p>
             </div>
           </div>
-        </div>
+        </section>
+
+        {/* Stats */}
+        <section className="text-center bg-white rounded-lg p-8 shadow-lg">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div>
+              <Users className="w-8 h-8 text-orange-500 mx-auto mb-2" />
+              <div className="text-2xl font-bold text-gray-800">10,000+</div>
+              <div className="text-gray-600">Happy Customers</div>
+            </div>
+            <div>
+              <Store className="w-8 h-8 text-orange-500 mx-auto mb-2" />
+              <div className="text-2xl font-bold text-gray-800">500+</div>
+              <div className="text-gray-600">Partner Restaurants</div>
+            </div>
+            <div>
+              <Truck className="w-8 h-8 text-orange-500 mx-auto mb-2" />
+              <div className="text-2xl font-bold text-gray-800">200+</div>
+              <div className="text-gray-600">Active Drivers</div>
+            </div>
+            <div>
+              <Clock className="w-8 h-8 text-orange-500 mx-auto mb-2" />
+              <div className="text-2xl font-bold text-gray-800">25 min</div>
+              <div className="text-gray-600">Average Delivery</div>
+            </div>
+          </div>
+        </section>
       </main>
     </div>
   );

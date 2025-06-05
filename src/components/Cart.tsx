@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button";
 import { CartItem } from "@/types/food";
 import { useToast } from "@/hooks/use-toast";
 import { useOrderManagement } from "@/hooks/useOrderManagement";
+import { useAuth } from "@/hooks/useAuth";
 import OrderStatusTracker from "./OrderStatusTracker";
 import DeliveryAddressForm from "./DeliveryAddressForm";
+import AuthModal from "./AuthModal";
 import { formatCurrency } from "@/utils/currency";
 
 interface CartProps {
@@ -20,11 +22,19 @@ interface CartProps {
 
 const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: CartProps) => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const { currentOrder, orderStatus, createOrder, updateOrderStatus } = useOrderManagement();
   const [showAddressForm, setShowAddressForm] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   const handleCheckout = () => {
     if (items.length === 0) return;
+    
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
+    
     setShowAddressForm(true);
   };
 
@@ -38,7 +48,7 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
       // Show success notification
       toast({
         title: "Order Placed Successfully! 🎉",
-        description: `Order #${orderId} has been sent to the restaurant. You'll receive updates as your food is prepared.`,
+        description: `Order #${orderId.slice(-8)} has been sent to the restaurant. You'll receive updates as your food is prepared.`,
       });
       
       setShowAddressForm(false);
@@ -51,6 +61,11 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
         variant: "destructive"
       });
     }
+  };
+
+  const handleAuthSuccess = () => {
+    setShowAuthModal(false);
+    setShowAddressForm(true);
   };
 
   if (!isOpen) return null;
@@ -138,7 +153,7 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
                 onClick={handleCheckout}
                 className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 text-lg"
               >
-                Place Order
+                {user ? 'Place Order' : 'Sign In to Order'}
               </Button>
             </div>
           )}
@@ -151,6 +166,12 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
           onCancel={() => setShowAddressForm(false)}
         />
       )}
+
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={handleAuthSuccess}
+      />
     </>
   );
 };
