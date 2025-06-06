@@ -60,7 +60,9 @@ export const useOrderManagement = () => {
         estimated_prep_time: orderData.estimated_prep_time,
         delivery_address: orderData.delivery_address,
         customer_phone: orderData.customer_phone,
-        special_instructions: orderData.special_instructions
+        special_instructions: orderData.special_instructions,
+        delivery_fee: orderData.delivery_fee,
+        updated_at: orderData.updated_at
       };
 
       setCurrentOrder(order);

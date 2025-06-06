@@ -39,21 +39,22 @@ export const AdminProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     try {
-      // Use RPC call to check admin status since the table might not be in types yet
-      const { data, error } = await supabase.rpc('check_admin_status', { 
-        user_id: user.id 
-      });
+      // Direct query to admin_users table
+      const { data, error } = await supabase
+        .from('admin_users')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
 
       if (error) {
-        console.log('User is not an admin or function not found');
+        console.log('User is not an admin:', error.message);
         setIsAdmin(false);
         setAdminRole(null);
         setPermissions({});
-      } else if (data && data.length > 0) {
-        const adminData = data[0];
+      } else if (data) {
         setIsAdmin(true);
-        setAdminRole(adminData.role);
-        setPermissions(adminData.permissions || {});
+        setAdminRole(data.role);
+        setPermissions(data.permissions || {});
       } else {
         setIsAdmin(false);
         setAdminRole(null);

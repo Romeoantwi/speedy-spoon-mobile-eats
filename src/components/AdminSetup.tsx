@@ -39,19 +39,21 @@ const AdminSetup = () => {
     setLoading(true);
 
     try {
-      // Use RPC call to create admin user
-      const { error } = await supabase.rpc('create_admin_user', {
-        admin_user_id: user.id,
-        admin_role: 'super_admin',
-        admin_restaurant_id: 'speedyspoon-main',
-        admin_permissions: {
-          manage_orders: true,
-          view_analytics: true,
-          manage_menu: true,
-          manage_users: true,
-          manage_drivers: true
-        }
-      });
+      // Direct insert into admin_users table
+      const { error } = await supabase
+        .from('admin_users')
+        .insert({
+          user_id: user.id,
+          role: 'super_admin',
+          restaurant_id: 'speedyspoon-main',
+          permissions: {
+            manage_orders: true,
+            view_analytics: true,
+            manage_menu: true,
+            manage_users: true,
+            manage_drivers: true
+          }
+        });
 
       if (error) throw error;
 
