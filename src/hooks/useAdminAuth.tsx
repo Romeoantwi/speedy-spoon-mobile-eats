@@ -2,7 +2,6 @@
 import { useState, useEffect, createContext, useContext } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
-import { AdminUser } from '@/types/order';
 
 interface AdminContextType {
   isAdmin: boolean;
@@ -39,11 +38,12 @@ export const AdminProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     try {
-      // Direct query to admin_users table
+      // Check if user has admin role in profiles table
       const { data, error } = await supabase
-        .from('admin_users')
+        .from('profiles')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('id', user.id)
+        .eq('user_type', 'admin')
         .single();
 
       if (error) {
@@ -53,8 +53,14 @@ export const AdminProvider = ({ children }: { children: React.ReactNode }) => {
         setPermissions({});
       } else if (data) {
         setIsAdmin(true);
-        setAdminRole(data.role);
-        setPermissions(data.permissions || {});
+        setAdminRole('admin');
+        setPermissions({
+          manage_orders: true,
+          view_analytics: true,
+          manage_menu: true,
+          manage_users: true,
+          manage_drivers: true
+        });
       } else {
         setIsAdmin(false);
         setAdminRole(null);

@@ -39,27 +39,19 @@ const AdminSetup = () => {
     setLoading(true);
 
     try {
-      // Direct insert into admin_users table
+      // Update user profile to admin type
       const { error } = await supabase
-        .from('admin_users')
-        .insert({
-          user_id: user.id,
-          role: 'super_admin',
-          restaurant_id: 'speedyspoon-main',
-          permissions: {
-            manage_orders: true,
-            view_analytics: true,
-            manage_menu: true,
-            manage_users: true,
-            manage_drivers: true
-          }
-        });
+        .from('profiles')
+        .update({
+          user_type: 'admin'
+        })
+        .eq('id', user.id);
 
       if (error) throw error;
 
       toast({
         title: "Admin Account Created! 🎉",
-        description: "You now have super admin access to the restaurant dashboard",
+        description: "You now have admin access to the restaurant dashboard",
       });
 
       // Redirect to restaurant dashboard

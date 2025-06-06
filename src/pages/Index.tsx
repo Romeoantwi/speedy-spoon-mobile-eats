@@ -1,139 +1,201 @@
 
-import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Truck, Users, Store, Clock, Star, Shield } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Link } from "react-router-dom";
+import { 
+  ShoppingCart, 
+  Truck, 
+  Users, 
+  Clock, 
+  MapPin, 
+  CreditCard,
+  BookOpen,
+  Github,
+  Smartphone
+} from "lucide-react";
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50">
-      {/* Header */}
-      <header className="container mx-auto px-4 py-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xl">S</span>
-            </div>
-            <span className="text-2xl font-bold text-gray-800">SpeedySpoon</span>
-          </div>
-          <nav className="hidden md:flex items-center space-x-6">
-            <a href="#features" className="text-gray-600 hover:text-orange-600">Features</a>
-            <a href="#how-it-works" className="text-gray-600 hover:text-orange-600">How It Works</a>
-            <a href="#about" className="text-gray-600 hover:text-orange-600">About</a>
-          </nav>
-        </div>
-      </header>
-
-      {/* Hero Section */}
-      <main className="container mx-auto px-4 py-12">
-        <div className="text-center mb-16">
-          <h1 className="text-5xl md:text-7xl font-bold text-gray-800 mb-6">
-            Hungry? We've Got You Covered!
+      <div className="container mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <h1 className="text-5xl font-bold text-gray-900 mb-4">
+            SpeedySpoon 🍽️
           </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-            Ghana's fastest food delivery service. Fresh, delicious Ghanaian meals delivered to your doorstep in 30 minutes or less.
+          <p className="text-xl text-gray-600 mb-6">
+            Ghana's Premier Food Delivery Platform
           </p>
-          <div className="flex flex-col md:flex-row gap-4 justify-center items-center">
+          <Badge variant="secondary" className="text-lg px-4 py-2">
+            Multi-User Restaurant Management System
+          </Badge>
+        </div>
+
+        {/* Quick Access Cards */}
+        <div className="grid md:grid-cols-3 gap-6 mb-12">
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
             <Link to="/customer">
-              <Button size="lg" className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-3 text-lg">
-                Order Now 🍽️
-              </Button>
+              <CardHeader className="text-center">
+                <div className="mx-auto mb-4 w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center">
+                  <ShoppingCart className="w-8 h-8 text-orange-600" />
+                </div>
+                <CardTitle className="text-orange-600">Order Food</CardTitle>
+                <CardDescription>Browse menu & place orders</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button className="w-full bg-orange-600 hover:bg-orange-700">
+                  Start Ordering
+                </Button>
+              </CardContent>
             </Link>
+          </Card>
+
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
             <Link to="/driver-signup">
-              <Button size="lg" variant="outline" className="px-8 py-3 text-lg">
-                Become a Driver 🚗
-              </Button>
+              <CardHeader className="text-center">
+                <div className="mx-auto mb-4 w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                  <Truck className="w-8 h-8 text-blue-600" />
+                </div>
+                <CardTitle className="text-blue-600">Become a Driver</CardTitle>
+                <CardDescription>Join our delivery team</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button className="w-full bg-blue-600 hover:bg-blue-700">
+                  Sign Up as Driver
+                </Button>
+              </CardContent>
             </Link>
-            <Link to="/restaurant-dashboard">
-              <Button size="lg" variant="outline" className="px-8 py-3 text-lg">
-                Restaurant Portal 🏪
-              </Button>
+          </Card>
+
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+            <Link to="/admin-setup">
+              <CardHeader className="text-center">
+                <div className="mx-auto mb-4 w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+                  <Users className="w-8 h-8 text-green-600" />
+                </div>
+                <CardTitle className="text-green-600">Restaurant Admin</CardTitle>
+                <CardDescription>Manage your restaurant</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button className="w-full bg-green-600 hover:bg-green-700">
+                  Admin Dashboard
+                </Button>
+              </CardContent>
             </Link>
+          </Card>
+        </div>
+
+        {/* Documentation & Resources */}
+        <div className="grid md:grid-cols-2 gap-6 mb-12">
+          <Card className="border-2 border-purple-200">
+            <Link to="/user-guide">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <BookOpen className="w-5 h-5 mr-2 text-purple-600" />
+                  Complete User Guide
+                </CardTitle>
+                <CardDescription>
+                  Comprehensive documentation covering all features, setup, and mobile conversion
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2 text-sm">
+                  <p>📚 System architecture & technology stack</p>
+                  <p>👥 User roles and permissions</p>
+                  <p>📱 Mobile app conversion with Capacitor</p>
+                  <p>🔧 GitHub integration & deployment</p>
+                </div>
+                <Button className="w-full mt-4 bg-purple-600 hover:bg-purple-700">
+                  View Complete Guide
+                </Button>
+              </CardContent>
+            </Link>
+          </Card>
+
+          <Card className="border-2 border-indigo-200">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Smartphone className="w-5 h-5 mr-2 text-indigo-600" />
+                Mobile App Ready
+              </CardTitle>
+              <CardDescription>
+                Convert to native mobile app with Capacitor
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2 text-sm">
+                <p>📱 iOS & Android support</p>
+                <p>🔄 Hot reload for development</p>
+                <p>📍 Native GPS & camera access</p>
+                <p>🔔 Push notifications</p>
+              </div>
+              <Badge className="mt-4 bg-indigo-100 text-indigo-800">
+                Capacitor Configured
+              </Badge>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Features Grid */}
+        <div className="grid md:grid-cols-4 gap-4 mb-12">
+          <div className="text-center p-4">
+            <Clock className="w-8 h-8 text-orange-500 mx-auto mb-2" />
+            <h3 className="font-semibold">Real-time Tracking</h3>
+            <p className="text-sm text-gray-600">Live order updates</p>
+          </div>
+          <div className="text-center p-4">
+            <MapPin className="w-8 h-8 text-orange-500 mx-auto mb-2" />
+            <h3 className="font-semibold">Ghana Locations</h3>
+            <p className="text-sm text-gray-600">Accra, Kumasi & more</p>
+          </div>
+          <div className="text-center p-4">
+            <CreditCard className="w-8 h-8 text-orange-500 mx-auto mb-2" />
+            <h3 className="font-semibold">Mobile Money</h3>
+            <p className="text-sm text-gray-600">MTN, AirtelTigo, Telecel</p>
+          </div>
+          <div className="text-center p-4">
+            <Github className="w-8 h-8 text-orange-500 mx-auto mb-2" />
+            <h3 className="font-semibold">Open Source</h3>
+            <p className="text-sm text-gray-600">GitHub integration</p>
           </div>
         </div>
 
-        {/* Features Section */}
-        <section id="features" className="mb-16">
-          <h2 className="text-3xl font-bold text-center mb-12">Why Choose SpeedySpoon?</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <Card className="text-center p-6">
-              <CardContent>
-                <Clock className="w-12 h-12 text-orange-500 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold mb-2">Lightning Fast</h3>
-                <p className="text-gray-600">Get your food delivered in 30 minutes or less, guaranteed.</p>
-              </CardContent>
-            </Card>
-            <Card className="text-center p-6">
-              <CardContent>
-                <Star className="w-12 h-12 text-orange-500 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold mb-2">Quality Food</h3>
-                <p className="text-gray-600">Fresh, authentic Ghanaian cuisine from the best local restaurants.</p>
-              </CardContent>
-            </Card>
-            <Card className="text-center p-6">
-              <CardContent>
-                <Shield className="w-12 h-12 text-orange-500 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold mb-2">Safe & Secure</h3>
-                <p className="text-gray-600">Secure payments with Mobile Money, bank transfer, and cash options.</p>
-              </CardContent>
-            </Card>
-          </div>
-        </section>
-
-        {/* How It Works */}
-        <section id="how-it-works" className="mb-16">
-          <h2 className="text-3xl font-bold text-center mb-12">How It Works</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl font-bold text-orange-600">1</span>
+        {/* Quick Setup Guide */}
+        <Card className="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+          <CardHeader>
+            <CardTitle className="text-2xl">Quick Setup Guide</CardTitle>
+            <CardDescription className="text-orange-100">
+              Get started in 3 simple steps
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-3 gap-6 text-center">
+              <div>
+                <div className="bg-white/20 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-2">
+                  <span className="text-xl font-bold">1</span>
+                </div>
+                <h4 className="font-semibold mb-1">Create Account</h4>
+                <p className="text-sm text-orange-100">Sign up as customer, driver, or admin</p>
               </div>
-              <h3 className="text-xl font-semibold mb-2">Browse & Order</h3>
-              <p className="text-gray-600">Choose from our delicious menu and place your order</p>
-            </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl font-bold text-orange-600">2</span>
+              <div>
+                <div className="bg-white/20 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-2">
+                  <span className="text-xl font-bold">2</span>
+                </div>
+                <h4 className="font-semibold mb-1">Set Up Role</h4>
+                <p className="text-sm text-orange-100">Complete your profile and verification</p>
               </div>
-              <h3 className="text-xl font-semibold mb-2">We Prepare</h3>
-              <p className="text-gray-600">Our chefs prepare your meal with fresh ingredients</p>
-            </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl font-bold text-orange-600">3</span>
+              <div>
+                <div className="bg-white/20 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-2">
+                  <span className="text-xl font-bold">3</span>
+                </div>
+                <h4 className="font-semibold mb-1">Start Using</h4>
+                <p className="text-sm text-orange-100">Order food, deliver, or manage restaurant</p>
               </div>
-              <h3 className="text-xl font-semibold mb-2">Fast Delivery</h3>
-              <p className="text-gray-600">Your order is delivered hot and fresh to your door</p>
             </div>
-          </div>
-        </section>
-
-        {/* Stats */}
-        <section className="text-center bg-white rounded-lg p-8 shadow-lg">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div>
-              <Users className="w-8 h-8 text-orange-500 mx-auto mb-2" />
-              <div className="text-2xl font-bold text-gray-800">10,000+</div>
-              <div className="text-gray-600">Happy Customers</div>
-            </div>
-            <div>
-              <Store className="w-8 h-8 text-orange-500 mx-auto mb-2" />
-              <div className="text-2xl font-bold text-gray-800">500+</div>
-              <div className="text-gray-600">Partner Restaurants</div>
-            </div>
-            <div>
-              <Truck className="w-8 h-8 text-orange-500 mx-auto mb-2" />
-              <div className="text-2xl font-bold text-gray-800">200+</div>
-              <div className="text-gray-600">Active Drivers</div>
-            </div>
-            <div>
-              <Clock className="w-8 h-8 text-orange-500 mx-auto mb-2" />
-              <div className="text-2xl font-bold text-gray-800">25 min</div>
-              <div className="text-gray-600">Average Delivery</div>
-            </div>
-          </div>
-        </section>
-      </main>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };

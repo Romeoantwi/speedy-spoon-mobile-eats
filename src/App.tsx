@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -12,6 +13,7 @@ import NotFound from "./pages/NotFound";
 import DriverSignup from "./components/DriverSignup";
 import { AdminProvider } from "@/hooks/useAdminAuth";
 import AdminSetup from "@/components/AdminSetup";
+import UserGuide from "@/components/UserGuide";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +32,7 @@ const App = () => (
               <Route path="/restaurant-dashboard" element={<RestaurantDashboard />} />
               <Route path="/driver-signup" element={<DriverSignup />} />
               <Route path="/admin-setup" element={<AdminSetup />} />
+              <Route path="/user-guide" element={<UserGuide />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
