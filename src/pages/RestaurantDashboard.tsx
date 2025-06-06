@@ -3,28 +3,17 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ChefHat, Clock, CheckCircle, Package, DollarSign, TrendingUp } from 'lucide-react';
+import { ChefHat, Clock, CheckCircle, Package, DollarSign, TrendingUp, Shield, AlertTriangle } from 'lucide-react';
 import NotificationCenter from '@/components/NotificationCenter';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { useRealTimeOrders } from '@/hooks/useRealTimeOrders';
 import { formatCurrency } from '@/utils/currency';
 
-interface Order {
-  id: string;
-  customer_id: string;
-  items: any[];
-  total_amount: number;
-  status: string;
-  delivery_address: string;
-  customer_phone?: string;
-  special_instructions?: string;
-  estimated_prep_time: number;
-  created_at: string;
-}
-
 const RestaurantDashboard = () => {
-  const { toast } = useToast();
-  const [orders, setOrders] = useState<Order[]>([]);
+  const { user } = useAuth();
+  const { isAdmin, adminRole, permissions, loading: adminLoading } = useAdminAuth();
+  const { orders, loading: ordersLoading, updateOrderStatus } = useRealTimeOrders('restaurant');
   const [stats, setStats] = useState({
     todayOrders: 0,
     todayRevenue: 0,
@@ -33,111 +22,22 @@ const RestaurantDashboard = () => {
   });
 
   useEffect(() => {
-    fetchOrders();
-    
-    // Subscribe to real-time order updates
-    const ordersSubscription = supabase
-      .channel('restaurant-orders')
-      .on('postgres_changes', 
-        { event: 'INSERT', schema: 'public', table: 'orders' },
-        (payload) => {
-          console.log('🍽️ New order received!', payload);
-          const newOrder = {
-            ...payload.new,
-            items: typeof payload.new.items === 'string' ? JSON.parse(payload.new.items) : payload.new.items
-          } as Order;
-          setOrders(prev => [newOrder, ...prev]);
-          
-          toast({
-            title: "New Order Received! 🍽️",
-            description: `Order #${newOrder.id.slice(-8)} - ${formatCurrency(newOrder.total_amount)}`,
-          });
-          
-          // Automatically confirm the order after 30 seconds (demo purposes)
-          setTimeout(() => {
-            updateOrderStatus(newOrder.id, 'confirmed');
-          }, 30000);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      ordersSubscription.unsubscribe();
-    };
-  }, []);
-
-  const fetchOrders = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('orders')
-        .select('*')
-        .eq('restaurant_id', 'speedyspoon-main')
-        .order('created_at', { ascending: false })
-        .limit(20);
-
-      if (error) throw error;
-      
-      // Parse the items JSON field
-      const parsedOrders = (data || []).map(order => ({
-        ...order,
-        items: typeof order.items === 'string' ? JSON.parse(order.items) : order.items
-      }));
-      
-      setOrders(parsedOrders);
-      
-      // Calculate stats
+    if (orders.length > 0) {
       const today = new Date().toDateString();
-      const todayOrders = parsedOrders.filter(order => 
+      const todayOrders = orders.filter(order => 
         new Date(order.created_at).toDateString() === today
       );
       
       setStats({
         todayOrders: todayOrders.length,
         todayRevenue: todayOrders.reduce((sum, order) => sum + Number(order.total_amount), 0),
-        pendingOrders: parsedOrders.filter(order => 
+        pendingOrders: orders.filter(order => 
           ['placed', 'confirmed', 'preparing'].includes(order.status)
         ).length,
         avgPrepTime: 25
       });
-      
-    } catch (error) {
-      console.error('Error fetching orders:', error);
     }
-  };
-
-  const updateOrderStatus = async (orderId: string, newStatus: string) => {
-    try {
-      const { error } = await supabase
-        .from('orders')
-        .update({ status: newStatus })
-        .eq('id', orderId);
-
-      if (error) throw error;
-      
-      // Update local state
-      setOrders(prev => prev.map(order => 
-        order.id === orderId ? { ...order, status: newStatus } : order
-      ));
-      
-      const statusMessages = {
-        confirmed: 'Order confirmed and being prepared',
-        preparing: 'Order is now being prepared',
-        ready: 'Order is ready for pickup'
-      };
-      
-      toast({
-        title: "Order Updated! ✅",
-        description: statusMessages[newStatus as keyof typeof statusMessages] || `Order status updated to ${newStatus}`,
-      });
-      
-    } catch (error: any) {
-      toast({
-        title: "Update Failed",
-        description: error.message || "Failed to update order status",
-        variant: "destructive"
-      });
-    }
-  };
+  }, [orders]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -169,6 +69,70 @@ const RestaurantDashboard = () => {
     }
   };
 
+  if (adminLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Checking admin access...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 flex items-center justify-center">
+        <Card className="max-w-md">
+          <CardHeader>
+            <CardTitle className="text-center text-red-600">Access Denied</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-center text-gray-600 mb-4">You must be logged in to access the restaurant dashboard.</p>
+            <Button onClick={() => window.location.href = '/'} className="w-full">
+              Go to Login
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 flex items-center justify-center">
+        <Card className="max-w-md">
+          <CardHeader>
+            <CardTitle className="text-center text-red-600 flex items-center justify-center">
+              <AlertTriangle className="w-5 h-5 mr-2" />
+              Admin Access Required
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-center text-gray-600 mb-4">
+              You need admin privileges to access the restaurant dashboard.
+            </p>
+            <div className="space-y-2">
+              <Button 
+                onClick={() => window.location.href = '/admin-setup'} 
+                className="w-full bg-orange-600 hover:bg-orange-700"
+              >
+                Set Up Admin Access
+              </Button>
+              <Button 
+                onClick={() => window.location.href = '/'} 
+                variant="outline" 
+                className="w-full"
+              >
+                Back to Home
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50">
       <div className="container mx-auto px-4 py-8">
@@ -177,9 +141,11 @@ const RestaurantDashboard = () => {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-3xl font-bold text-gray-800">SpeedySpoon Restaurant</h1>
-              <p className="text-gray-600">Manage your orders and kitchen operations</p>
+              <p className="text-gray-600">Admin Dashboard - {adminRole}</p>
             </div>
             <div className="flex items-center space-x-2">
+              <Shield className="w-6 h-6 text-green-600" />
+              <Badge variant="default" className="bg-green-500">ADMIN ACCESS</Badge>
               <ChefHat className="w-8 h-8 text-orange-600" />
               <Badge variant="default" className="bg-green-500">OPEN</Badge>
             </div>
@@ -231,13 +197,15 @@ const RestaurantDashboard = () => {
           <div className="lg:col-span-2">
             <Card>
               <CardHeader>
-                <CardTitle>Recent Orders</CardTitle>
+                <CardTitle>Recent Orders ({orders.length})</CardTitle>
               </CardHeader>
               <CardContent>
-                {orders.length === 0 ? (
+                {ordersLoading ? (
+                  <p className="text-center text-gray-500 py-8">Loading orders...</p>
+                ) : orders.length === 0 ? (
                   <p className="text-center text-gray-500 py-8">No orders yet today</p>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-4 max-h-96 overflow-y-auto">
                     {orders.map((order) => (
                       <div key={order.id} className="border rounded-lg p-4 hover:bg-gray-50">
                         <div className="flex justify-between items-start mb-3">
@@ -246,6 +214,11 @@ const RestaurantDashboard = () => {
                             <p className="text-sm text-gray-600">
                               {new Date(order.created_at).toLocaleTimeString()}
                             </p>
+                            {order.payment_status && (
+                              <Badge className={order.payment_status === 'paid' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>
+                                {order.payment_status}
+                              </Badge>
+                            )}
                           </div>
                           <div className="text-right">
                             <Badge className={getStatusColor(order.status)}>
@@ -272,15 +245,24 @@ const RestaurantDashboard = () => {
                           {order.special_instructions && (
                             <p><strong>Instructions:</strong> {order.special_instructions}</p>
                           )}
+                          {order.driver_id && (
+                            <p><strong>Driver:</strong> Assigned</p>
+                          )}
                         </div>
                         
-                        {getNextStatus(order.status) && (
+                        {getNextStatus(order.status) && order.payment_status === 'paid' && (
                           <Button 
                             onClick={() => updateOrderStatus(order.id, getNextStatus(order.status)!)}
                             className="w-full bg-orange-500 hover:bg-orange-600"
                           >
                             {getNextStatusLabel(order.status)}
                           </Button>
+                        )}
+                        
+                        {order.payment_status !== 'paid' && (
+                          <div className="bg-yellow-50 border border-yellow-200 rounded p-2 text-sm text-yellow-800">
+                            ⏳ Waiting for payment confirmation
+                          </div>
                         )}
                       </div>
                     ))}

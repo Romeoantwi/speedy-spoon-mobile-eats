@@ -353,9 +353,12 @@ export type Database = {
           estimated_prep_time: number | null
           id: string
           items: Json
+          payment_method: string | null
+          payment_status: string | null
           restaurant_id: string
           special_instructions: string | null
           status: string
+          stripe_payment_intent_id: string | null
           total_amount: number
           updated_at: string
         }
@@ -370,9 +373,12 @@ export type Database = {
           estimated_prep_time?: number | null
           id?: string
           items: Json
+          payment_method?: string | null
+          payment_status?: string | null
           restaurant_id?: string
           special_instructions?: string | null
           status?: string
+          stripe_payment_intent_id?: string | null
           total_amount: number
           updated_at?: string
         }
@@ -387,9 +393,12 @@ export type Database = {
           estimated_prep_time?: number | null
           id?: string
           items?: Json
+          payment_method?: string | null
+          payment_status?: string | null
           restaurant_id?: string
           special_instructions?: string | null
           status?: string
+          stripe_payment_intent_id?: string | null
           total_amount?: number
           updated_at?: string
         }
@@ -427,6 +436,53 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string | null
+          id: string
+          order_id: string | null
+          payment_method: string
+          status: string
+          stripe_payment_intent_id: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string | null
+          id?: string
+          order_id?: string | null
+          payment_method: string
+          status?: string
+          stripe_payment_intent_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string | null
+          id?: string
+          order_id?: string | null
+          payment_method?: string
+          status?: string
+          stripe_payment_intent_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
