@@ -39,8 +39,9 @@ export const useRealTimeOrders = (userType: 'restaurant' | 'driver' | 'customer'
 
       const parsedOrders = (data || []).map(order => ({
         ...order,
-        items: typeof order.items === 'string' ? JSON.parse(order.items) : order.items
-      }));
+        items: typeof order.items === 'string' ? JSON.parse(order.items) : order.items,
+        status: order.status as Order['status']
+      })) as Order[];
 
       setOrders(parsedOrders);
     } catch (error) {
@@ -61,7 +62,8 @@ export const useRealTimeOrders = (userType: 'restaurant' | 'driver' | 'customer'
           if (payload.eventType === 'INSERT') {
             const newOrder = {
               ...payload.new,
-              items: typeof payload.new.items === 'string' ? JSON.parse(payload.new.items) : payload.new.items
+              items: typeof payload.new.items === 'string' ? JSON.parse(payload.new.items) : payload.new.items,
+              status: payload.new.status as Order['status']
             } as Order;
             
             setOrders(prev => [newOrder, ...prev]);
@@ -75,7 +77,8 @@ export const useRealTimeOrders = (userType: 'restaurant' | 'driver' | 'customer'
           } else if (payload.eventType === 'UPDATE') {
             const updatedOrder = {
               ...payload.new,
-              items: typeof payload.new.items === 'string' ? JSON.parse(payload.new.items) : payload.new.items
+              items: typeof payload.new.items === 'string' ? JSON.parse(payload.new.items) : payload.new.items,
+              status: payload.new.status as Order['status']
             } as Order;
             
             setOrders(prev => prev.map(order => 

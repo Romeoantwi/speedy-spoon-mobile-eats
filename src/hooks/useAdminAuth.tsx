@@ -2,6 +2,7 @@
 import { useState, useEffect, createContext, useContext } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import { AdminUser } from '@/types/order';
 
 interface AdminContextType {
   isAdmin: boolean;
@@ -38,21 +39,25 @@ export const AdminProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     try {
-      const { data, error } = await supabase
-        .from('admin_users')
-        .select('role, permissions')
-        .eq('user_id', user.id)
-        .single();
+      // Use RPC call to check admin status since the table might not be in types yet
+      const { data, error } = await supabase.rpc('check_admin_status', { 
+        user_id: user.id 
+      });
 
       if (error) {
-        console.log('User is not an admin');
+        console.log('User is not an admin or function not found');
         setIsAdmin(false);
         setAdminRole(null);
         setPermissions({});
-      } else {
+      } else if (data && data.length > 0) {
+        const adminData = data[0];
         setIsAdmin(true);
-        setAdminRole(data.role);
-        setPermissions(data.permissions || {});
+        setAdminRole(adminData.role);
+        setPermissions(adminData.permissions || {});
+      } else {
+        setIsAdmin(false);
+        setAdminRole(null);
+        setPermissions({});
       }
     } catch (error) {
       console.error('Error checking admin status:', error);
