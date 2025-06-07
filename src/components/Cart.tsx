@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { X, Minus, Plus, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,6 +5,7 @@ import { CartItem } from "@/types/food";
 import { useToast } from "@/hooks/use-toast";
 import { useOrderManagement } from "@/hooks/useOrderManagement";
 import { useAuth } from "@/hooks/useAuth";
+import { usePaystack } from "@/hooks/usePaystack";
 import OrderStatusTracker from "./OrderStatusTracker";
 import DeliveryAddressForm from "./DeliveryAddressForm";
 import AuthModal from "./AuthModal";
@@ -24,8 +24,10 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
   const { toast } = useToast();
   const { user } = useAuth();
   const { currentOrder, orderStatus, createOrder, updateOrderStatus } = useOrderManagement();
+  const { makePayment, loading: paymentLoading } = usePaystack();
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [processingPayment, setProcessingPayment] = useState(false);
 
   const handleCheckout = () => {
     if (items.length === 0) return;
@@ -39,25 +41,51 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
   };
 
   const handleAddressSubmit = async (address: string) => {
+    if (!user) return;
+
     try {
+      // Create order first
       const orderId = await createOrder(items, address);
       
-      // Clear the cart
-      onClearCart();
-      
-      // Show success notification
-      toast({
-        title: "Order Placed Successfully! 🎉",
-        description: `Order #${orderId.slice(-8)} has been sent to the restaurant. You'll receive updates as your food is prepared.`,
-      });
-      
+      setProcessingPayment(true);
       setShowAddressForm(false);
+
+      // Process payment with Paystack
+      await makePayment(
+        user.email || '',
+        total,
+        orderId,
+        (transaction) => {
+          // Payment successful
+          toast({
+            title: "Payment Successful! 🎉",
+            description: `Order #${orderId.slice(-8)} has been confirmed and sent to the restaurant.`,
+          });
+          
+          // Clear the cart
+          onClearCart();
+          setProcessingPayment(false);
+          
+          // Keep cart open to show order tracking
+        },
+        () => {
+          // Payment cancelled or closed
+          setProcessingPayment(false);
+          toast({
+            title: "Payment Cancelled",
+            description: "Your order has been saved but payment was not completed.",
+            variant: "destructive"
+          });
+        },
+        user.user_metadata?.full_name,
+        user.phone
+      );
       
-      // Keep cart open to show order tracking
-    } catch (error) {
+    } catch (error: any) {
+      setProcessingPayment(false);
       toast({
-        title: "Order Failed",
-        description: "There was an error placing your order. Please try again.",
+        title: "Payment Failed",
+        description: error.message || "There was an error processing your payment. Please try again.",
         variant: "destructive"
       });
     }
@@ -89,7 +117,13 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
           </div>
 
           <div className="flex-1 overflow-y-auto p-4">
-            {currentOrder ? (
+            {processingPayment ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-orange-500 mx-auto mb-4"></div>
+                <p className="text-lg font-medium">Processing Payment...</p>
+                <p className="text-gray-500">Please complete your payment with Paystack</p>
+              </div>
+            ) : currentOrder ? (
               <OrderStatusTracker 
                 order={currentOrder} 
                 onStatusChange={updateOrderStatus}
@@ -143,7 +177,7 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
             )}
           </div>
 
-          {!currentOrder && items.length > 0 && (
+          {!currentOrder && !processingPayment && items.length > 0 && (
             <div className="border-t p-4 space-y-4">
               <div className="flex justify-between items-center text-xl font-bold">
                 <span>Total:</span>
@@ -151,10 +185,14 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
               </div>
               <Button
                 onClick={handleCheckout}
+                disabled={paymentLoading}
                 className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 text-lg"
               >
-                {user ? 'Place Order' : 'Sign In to Order'}
+                {user ? 'Place Order & Pay' : 'Sign In to Order'}
               </Button>
+              <p className="text-xs text-gray-500 text-center">
+                Secure payment powered by Paystack
+              </p>
             </div>
           )}
         </div>
