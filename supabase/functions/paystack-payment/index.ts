@@ -8,6 +8,7 @@ const corsHeaders = {
 };
 
 interface PaymentRequest {
+  action: string;
   email: string;
   amount: number;
   orderId: string;
@@ -16,6 +17,7 @@ interface PaymentRequest {
 }
 
 interface VerifyPaymentRequest {
+  action: string;
   reference: string;
   orderId: string;
 }
@@ -31,11 +33,11 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_ANON_KEY') ?? ''
     );
 
-    const url = new URL(req.url);
-    const action = url.searchParams.get('action');
+    const requestBody = await req.json();
+    const { action } = requestBody;
 
     if (action === 'initialize') {
-      const { email, amount, orderId, customerName, phone }: PaymentRequest = await req.json();
+      const { email, amount, orderId, customerName, phone }: PaymentRequest = requestBody;
 
       // Initialize payment with Paystack
       const paystackResponse = await fetch('https://api.paystack.co/transaction/initialize', {
@@ -79,7 +81,7 @@ serve(async (req) => {
       });
 
     } else if (action === 'verify') {
-      const { reference, orderId }: VerifyPaymentRequest = await req.json();
+      const { reference, orderId }: VerifyPaymentRequest = requestBody;
 
       // Verify payment with Paystack
       const verifyResponse = await fetch(`https://api.paystack.co/transaction/verify/${reference}`, {

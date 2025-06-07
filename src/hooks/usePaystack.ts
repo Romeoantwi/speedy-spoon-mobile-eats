@@ -38,13 +38,13 @@ export const usePaystack = () => {
 
       const { data, error } = await supabase.functions.invoke('paystack-payment', {
         body: {
+          action: 'initialize',
           email,
           amount,
           orderId,
           customerName,
           phone,
-        },
-        query: { action: 'initialize' }
+        }
       });
 
       if (error) throw error;
@@ -66,8 +66,11 @@ export const usePaystack = () => {
   const verifyPayment = async (reference: string, orderId: string) => {
     try {
       const { data, error } = await supabase.functions.invoke('paystack-payment', {
-        body: { reference, orderId },
-        query: { action: 'verify' }
+        body: { 
+          action: 'verify',
+          reference, 
+          orderId 
+        }
       });
 
       if (error) throw error;
