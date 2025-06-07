@@ -9,10 +9,7 @@ import {
   Users, 
   Clock, 
   MapPin, 
-  CreditCard,
-  BookOpen,
-  Github,
-  Smartphone
+  CreditCard
 } from "lucide-react";
 
 const Index = () => {
@@ -86,57 +83,6 @@ const Index = () => {
           </Card>
         </div>
 
-        {/* Documentation & Resources */}
-        <div className="grid md:grid-cols-2 gap-6 mb-12">
-          <Card className="border-2 border-purple-200">
-            <Link to="/user-guide">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <BookOpen className="w-5 h-5 mr-2 text-purple-600" />
-                  Complete User Guide
-                </CardTitle>
-                <CardDescription>
-                  Comprehensive documentation covering all features, setup, and mobile conversion
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 text-sm">
-                  <p>📚 System architecture & technology stack</p>
-                  <p>👥 User roles and permissions</p>
-                  <p>📱 Mobile app conversion with Capacitor</p>
-                  <p>🔧 GitHub integration & deployment</p>
-                </div>
-                <Button className="w-full mt-4 bg-purple-600 hover:bg-purple-700">
-                  View Complete Guide
-                </Button>
-              </CardContent>
-            </Link>
-          </Card>
-
-          <Card className="border-2 border-indigo-200">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Smartphone className="w-5 h-5 mr-2 text-indigo-600" />
-                Mobile App Ready
-              </CardTitle>
-              <CardDescription>
-                Convert to native mobile app with Capacitor
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2 text-sm">
-                <p>📱 iOS & Android support</p>
-                <p>🔄 Hot reload for development</p>
-                <p>📍 Native GPS & camera access</p>
-                <p>🔔 Push notifications</p>
-              </div>
-              <Badge className="mt-4 bg-indigo-100 text-indigo-800">
-                Capacitor Configured
-              </Badge>
-            </CardContent>
-          </Card>
-        </div>
-
         {/* Features Grid */}
         <div className="grid md:grid-cols-4 gap-4 mb-12">
           <div className="text-center p-4">
@@ -155,9 +101,9 @@ const Index = () => {
             <p className="text-sm text-gray-600">MTN, AirtelTigo, Telecel</p>
           </div>
           <div className="text-center p-4">
-            <Github className="w-8 h-8 text-orange-500 mx-auto mb-2" />
-            <h3 className="font-semibold">Open Source</h3>
-            <p className="text-sm text-gray-600">GitHub integration</p>
+            <ShoppingCart className="w-8 h-8 text-orange-500 mx-auto mb-2" />
+            <h3 className="font-semibold">Easy Ordering</h3>
+            <p className="text-sm text-gray-600">Simple & fast</p>
           </div>
         </div>
 
