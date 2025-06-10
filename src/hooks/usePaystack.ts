@@ -1,157 +1,150 @@
-
 import { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { createClient } from '@supabase/supabase-js';
 
-interface PaystackConfig {
-  key: string;
-  email: string;
-  amount: number;
-  ref: string;
-  onSuccess: (transaction: any) => void;
-  onClose: () => void;
+// Initialize Supabase client (ensure your SUPABASE_URL and SUPABASE_ANON_KEY are in .env.local)
+// For Vite, environment variables are accessed via import.meta.env
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error("Supabase URL or Anon Key is missing from environment variables.");
 }
 
+const supabase = createClient(supabaseUrl!, supabaseAnonKey!);
+
+// Declare window.PaystackPop for TypeScript
 declare global {
   interface Window {
     PaystackPop: {
-      setup: (config: PaystackConfig) => {
+      setup: (options: PaystackPop.PaystackPopOptions) => {
         openIframe: () => void;
+        closeIframe: () => void;
       };
     };
   }
 }
 
+interface PaymentDetails {
+  email: string;
+  amount: number; // Total amount in your currency (GHS)
+  orderId: string;
+  customerName?: string;
+  phone?: string;
+}
+
+interface PaymentResponse {
+  status: string;
+  message: string;
+  reference?: string;
+  authorization_url?: string;
+}
+
 export const usePaystack = () => {
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
+  const [error, setError] = useState<string | null>(null);
 
-  const initializePayment = async (
-    email: string,
-    amount: number,
-    orderId: string,
-    customerName?: string,
-    phone?: string
-  ) => {
+  const makePayment = async ({ email, amount, orderId, customerName, phone }: PaymentDetails): Promise<PaymentResponse | undefined> => {
+    setLoading(true);
+    setError(null);
+
     try {
-      setLoading(true);
-
-      const { data, error } = await supabase.functions.invoke('paystack-payment', {
-        body: {
-          action: 'initialize',
-          email,
-          amount,
-          orderId,
-          customerName,
-          phone,
-        }
+      // 1. Call Supabase Edge Function to Initialize Payment
+      const { data: initData, error: initError } = await supabase.functions.invoke('initialize-paystack-payment', {
+        body: { email, amount, orderId, customerName, phone },
       });
 
-      if (error) throw error;
-
-      return data;
-    } catch (error: any) {
-      console.error('Payment initialization error:', error);
-      toast({
-        title: "Payment Error",
-        description: error.message || "Failed to initialize payment",
-        variant: "destructive"
-      });
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const verifyPayment = async (reference: string, orderId: string) => {
-    try {
-      const { data, error } = await supabase.functions.invoke('paystack-payment', {
-        body: { 
-          action: 'verify',
-          reference, 
-          orderId 
-        }
-      });
-
-      if (error) throw error;
-
-      return data;
-    } catch (error: any) {
-      console.error('Payment verification error:', error);
-      toast({
-        title: "Verification Error", 
-        description: error.message || "Failed to verify payment",
-        variant: "destructive"
-      });
-      throw error;
-    }
-  };
-
-  const makePayment = (
-    email: string,
-    amount: number,
-    orderId: string,
-    onSuccess: (transaction: any) => void,
-    onClose?: () => void,
-    customerName?: string,
-    phone?: string
-  ) => {
-    return new Promise(async (resolve, reject) => {
-      try {
-        // Initialize payment
-        const paymentData = await initializePayment(email, amount, orderId, customerName, phone);
-
-        // Load Paystack script if not already loaded
-        if (!window.PaystackPop) {
-          const script = document.createElement('script');
-          script.src = 'https://js.paystack.co/v1/inline.js';
-          script.onload = () => {
-            openPaystackPopup();
-          };
-          document.head.appendChild(script);
-        } else {
-          openPaystackPopup();
-        }
-
-        function openPaystackPopup() {
-          const handler = window.PaystackPop.setup({
-            key: 'pk_test_fa7fd5600c6823d69311c5b70263db20b4b5558b', // Your Paystack public key
-            email: email,
-            amount: Math.round(amount * 100), // Convert to kobo
-            ref: paymentData.reference,
-            onSuccess: async (transaction: any) => {
-              try {
-                // Verify payment
-                const verificationResult = await verifyPayment(transaction.reference, orderId);
-                
-                if (verificationResult.success) {
-                  onSuccess(transaction);
-                  resolve(transaction);
-                } else {
-                  throw new Error('Payment verification failed');
-                }
-              } catch (error) {
-                reject(error);
-              }
-            },
-            onClose: () => {
-              onClose?.();
-              reject(new Error('Payment cancelled by user'));
-            },
-          });
-
-          handler.openIframe();
-        }
-      } catch (error) {
-        reject(error);
+      if (initError) {
+        console.error("Error initializing payment via Edge Function:", initError);
+        throw new Error(initError.message || 'Payment initialization failed.');
       }
-    });
+
+      const { authorization_url, reference, access_code } = initData.data;
+
+      // 2. Open Paystack Pop-up using the data from the Edge Function
+      // Dynamically load Paystack inline script if not already present
+      if (!window.PaystackPop) {
+        const script = document.createElement('script');
+        script.src = 'https://js.paystack.co/v1/inline.js';
+        script.async = true;
+        document.body.appendChild(script);
+
+        await new Promise<void>((resolve, reject) => {
+          script.onload = () => resolve();
+          script.onerror = () => reject(new Error('Failed to load Paystack script.'));
+        });
+      }
+
+      const paystackPublicKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY;
+      if (!paystackPublicKey) {
+        throw new Error("Paystack Public Key (VITE_PAYSTACK_PUBLIC_KEY) not found in environment.");
+      }
+
+      const [firstname, lastname] = customerName ? customerName.split(' ') : ['', ''];
+
+      const handler = window.PaystackPop.setup({
+        key: paystackPublicKey,
+        email,
+        amount: Math.round(amount * 100), // Amount should be passed from backend (or validated)
+        ref: reference, // Use the reference generated by the backend!
+        currency: 'GHS',
+        metadata: {
+          order_id: orderId, // Pass orderId for backend verification context
+          customer_name: customerName,
+          customer_phone: phone,
+          // You can pass other custom fields here
+        },
+        channels: ['card', 'mobile_money', 'bank_transfer'],
+        callback: async (response: any) => {
+          // This callback fires when the user completes payment or closes the pop-up
+          // Now, we securely verify the transaction on the backend
+          console.log("Paystack callback received:", response);
+          setLoading(true); // Keep loading true during verification
+
+          try {
+            const { data: verifyData, error: verifyError } = await supabase.functions.invoke('verify-paystack-payment', {
+              body: { reference: response.reference, orderId }, // Send reference and orderId to backend
+            });
+
+            if (verifyError) {
+              console.error("Error verifying payment via Edge Function:", verifyError);
+              throw new Error(verifyError.message || 'Payment verification failed.');
+            }
+
+            if (verifyData.data.status === 'success') {
+              // Payment successfully verified by the backend
+              return { status: 'success', message: 'Payment successful and verified.', reference: response.reference };
+            } else {
+              // Payment not successful after verification
+              throw new Error(verifyData.data.gateway_response || 'Payment not successful.');
+            }
+          } catch (verificationError: any) {
+            console.error("Verification process failed:", verificationError);
+            throw new Error(verificationError.message || 'Payment verification failed.');
+          } finally {
+            setLoading(false);
+          }
+        },
+        onClose: () => {
+          console.log('Paystack Pop-up closed by user.');
+          setLoading(false); // Stop loading if user closes pop-up
+          setError('Payment cancelled by user.');
+        },
+        firstname,
+        lastname,
+        phone
+      });
+
+      handler.openIframe(); // Open the Paystack pop-up
+      // Note: The actual success/failure will be handled by the 'callback' or 'onClose' above.
+      // This function does not return a direct success/failure until the callback fires.
+      return undefined; // We return undefined here as the outcome is asynchronous
+    } catch (err: any) {
+      console.error("Error during makePayment execution:", err);
+      setError(err.message || "An unexpected error occurred during payment.");
+      setLoading(false);
+      return { status: 'error', message: err.message || "An unexpected error occurred during payment." };
+    }
   };
 
-  return {
-    makePayment,
-    initializePayment,
-    verifyPayment,
-    loading
-  };
+  return { makePayment, loading, error };
 };
