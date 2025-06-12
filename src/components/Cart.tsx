@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X, Minus, Plus, ShoppingBag, CreditCard, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CartItem } from "@/types/food";
 import { useToast } from "@/hooks/use-toast";
 import { useOrderManagement } from "@/hooks/useOrderManagement";
 import { useAuth } from "@/hooks/useAuth";
-import { usePaystack } from "@/hooks/usePaystack"; // IMPORT THE NEW HOOK
+import { usePaystack } from "@/hooks/usePaystack";
 import OrderStatusTracker from "./OrderStatusTracker";
 import DeliveryAddressForm from "./DeliveryAddressForm";
 import AuthModal from "./AuthModal";
@@ -23,19 +23,26 @@ interface CartProps {
 const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: CartProps) => {
   const { toast } = useToast();
   const { user } = useAuth();
-  const { currentOrder, orderStatus, createOrder, updateOrderStatus } = useOrderManagement();
-  const { makePayment, loading: paymentLoading, error: paystackError } = usePaystack(); // USE THE NEW HOOK
+  // We're now getting clearCurrentOrder and loadingOrder from useOrderManagement
+  const { currentOrder, orderStatus, createOrder, clearCurrentOrder, loadingOrder } = useOrderManagement();
+  const { makePayment, loading: paymentLoading, error: paystackError } = usePaystack();
 
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [paymentError, setPaymentError] = useState<string | null>(paystackError); // Initialize with paystack hook error
+  const [paymentError, setPaymentError] = useState<string | null>(null);
   const [failedPaymentOrderId, setFailedPaymentOrderId] = useState<string | null>(null);
+  // Combined loading state for any active process (order creation, payment)
+  const [isProcessingOrder, setIsProcessingOrder] = useState(false);
 
-  // Effect to update local paymentError when paystackError changes
-  // This is a simple way to propagate errors from the hook to the component's state
-  useState(() => {
+  // Synchronize paystackError with local paymentError state
+  useEffect(() => {
     setPaymentError(paystackError);
   }, [paystackError]);
+
+  // Manage overall loading state based on order creation and payment processing
+  useEffect(() => {
+    setIsProcessingOrder(loadingOrder || paymentLoading);
+  }, [loadingOrder, paymentLoading]);
 
 
   const handleCheckout = () => {
@@ -59,13 +66,13 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
 
   const handlePaymentFailed = (orderId: string | null, errorMessage: string) => {
     setFailedPaymentOrderId(orderId);
-    // setProcessingPayment(false); // Now managed by paystackLoading
     setPaymentError(errorMessage);
     toast({
       title: "Payment Failed",
       description: errorMessage || "There was an error processing your payment.",
       variant: "destructive"
     });
+    // setIsProcessingOrder will be updated by the useEffect linked to paymentLoading/loadingOrder
   };
 
   const handleRetryPayment = async () => {
@@ -77,7 +84,7 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
       const result = await makePayment(
         {
           email: user.email || '',
-          amount: total + 5, // Include delivery fee in total
+          amount: total + 5, // Include delivery fee in total (GH₵ 5.00)
           orderId: failedPaymentOrderId,
           customerName: user.user_metadata?.full_name,
           phone: user.phone
@@ -85,18 +92,19 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
       );
 
       if (result && result.status === 'success') {
-        onClearCart();
-        setFailedPaymentOrderId(null);
-        // The success toast is already handled by usePaystack
+        onClearCart(); // Clear the cart as payment is successful
+        setFailedPaymentOrderId(null); // Clear failed state
+        // The success toast and order status update is handled by usePaystack callback
       } else if (result && result.status === 'error') {
         handlePaymentFailed(failedPaymentOrderId, result.message);
       }
-      // If result is undefined, it means the pop-up was opened, and callback will handle outcome.
-
+      // If result is undefined, it means the Paystack pop-up was successfully opened,
+      // and the outcome (success/error/cancel) will be handled by its callback.
     } catch (error: any) {
       console.error("Error during retry payment:", error);
       handlePaymentFailed(failedPaymentOrderId, error.message || "Payment failed. Please try again.");
     }
+    // No finally block for setIsProcessingOrder(false) here, as paymentLoading from hook will handle it
   };
 
   const handleAddressSubmit = async (address: string) => {
@@ -116,31 +124,43 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
       // Initiate Paystack payment via the hook
       const result = await makePayment({
         email: user.email || '',
-        amount: total + 5, // Include delivery fee in total
+        amount: total + 5, // Include delivery fee in total (GH₵ 5.00)
         orderId: orderId, // Pass the newly created orderId
         customerName: user.user_metadata?.full_name,
         phone: user.phone
       });
 
-      // Check for immediate errors from makePayment (e.g., config error)
+      // Check for immediate errors from makePayment (e.g., configuration issues)
       if (result && result.status === 'error') {
         handlePaymentFailed(orderId, result.message);
       }
-      // If result is undefined, it means the pop-up was opened, and callback will handle outcome.
-
+      // If result is undefined, it means the Paystack pop-up was successfully opened,
+      // and its callback will handle the final payment outcome.
     } catch (error: any) {
       console.error("Error creating order or initiating payment:", error);
-      handlePaymentFailed(null, error.message || "Payment failed. Please try again.");
+      // Pass null for orderId if order creation failed, otherwise pass the failed orderId
+      handlePaymentFailed(error.orderId || null, error.message || "Payment failed. Please try again.");
     }
+    // No finally block for setIsProcessingOrder(false) here, as loadingOrder/paymentLoading from hooks will handle it
   };
 
   const handleAuthSuccess = () => {
     setShowAuthModal(false);
-    setShowAddressForm(true);
+    setShowAddressForm(true); // Proceed to address form after successful auth
   };
 
   const getTotalItems = () => {
     return items.reduce((total, item) => total + item.quantity, 0);
+  };
+
+  // Function to allow starting a new order while one is active
+  const startNewOrder = () => {
+    clearCurrentOrder(); // Clear the active order state from order management hook
+    onClearCart(); // Clear the current shopping cart contents
+    setFailedPaymentOrderId(null); // Reset any failed payment state
+    setPaymentError(null); // Clear any payment errors
+    setShowAddressForm(false); // Hide address form
+    // isProcessingOrder will automatically update based on loadingOrder/paymentLoading
   };
 
   if (!isOpen) return null;
@@ -152,8 +172,9 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b sticky top-0 bg-white z-10">
             <h2 className="text-xl font-bold text-gray-800">
-              {currentOrder ? 'Order Status' : 'Your Order'}
-              {items.length > 0 && !currentOrder && (
+              {/* Conditional title based on active order or cart content */}
+              {currentOrder && orderStatus !== 'delivered' && orderStatus !== 'cancelled' ? 'Current Order' : 'Your Order'}
+              {items.length > 0 && !(currentOrder && orderStatus !== 'delivered' && orderStatus !== 'cancelled') && (
                 <span className="ml-2 text-sm font-normal text-gray-500">
                   ({getTotalItems()} {getTotalItems() === 1 ? 'item' : 'items'})
                 </span>
@@ -164,7 +185,7 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
               variant="ghost"
               size="icon"
               className="hover:bg-gray-100"
-              disabled={paymentLoading}
+              disabled={isProcessingOrder} {/* Disable close during any active process */}
             >
               <X className="w-5 h-5" />
             </Button>
@@ -172,19 +193,21 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto">
-            {paymentLoading ? ( // Use paymentLoading from hook
+            {isProcessingOrder ? ( // Show loader when any payment/order process is active
               <div className="text-center py-12">
                 <Loader2 className="w-16 h-16 animate-spin text-orange-500 mx-auto mb-4" />
-                <p className="text-lg font-medium">Processing Payment...</p>
-                <p className="text-gray-500">Please complete your payment with Paystack</p>
+                <p className="text-lg font-medium">Processing Your Request...</p>
+                <p className="text-gray-500">
+                  {loadingOrder ? "Creating your order..." : "Please complete your payment with Paystack"}
+                </p>
 
-                {paymentError && (
+                {paymentError && ( // Display any payment errors during loading
                   <div className="mt-4 p-3 bg-red-50 text-red-600 rounded-md text-sm">
                     {paymentError}
                   </div>
                 )}
               </div>
-            ) : failedPaymentOrderId ? (
+            ) : failedPaymentOrderId ? ( // Display payment failure message and retry option
               <div className="text-center p-6">
                 <div className="bg-red-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
                   <X className="w-8 h-8 text-red-600" />
@@ -196,183 +219,135 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
                   <Button
                     onClick={handleRetryPayment}
                     className="bg-orange-500 hover:bg-orange-600"
-                    disabled={paymentLoading}
+                    disabled={isProcessingOrder}
                   >
                     <CreditCard className="w-4 h-4 mr-2" />
                     Retry Payment
                   </Button>
                   <Button
                     onClick={() => {
-                      setFailedPaymentOrderId(null);
+                      setFailedPaymentOrderId(null); // Allow returning to cart view
                       setPaymentError(null);
                     }}
                     variant="outline"
-                    disabled={paymentLoading}
+                    disabled={isProcessingOrder}
                   >
                     Back to Cart
                   </Button>
                 </div>
               </div>
-            ) : currentOrder ? (
-              <OrderStatusTracker
-                order={currentOrder}
-                onStatusChange={updateOrderStatus}
-                onClose={onClose}
-              />
-            ) : items.length === 0 ? (
-              <div className="text-center py-12">
-                <ShoppingBag className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500 text-lg">Your cart is empty</p>
-                <p className="text-gray-400 text-sm">Add some delicious items to get started!</p>
-
-                <Button
-                  onClick={onClose}
-                  variant="outline"
-                  className="mt-6"
-                >
-                  Browse Menu
-                </Button>
+            ) : showAddressForm ? ( // Display delivery address form
+              <DeliveryAddressForm onSubmit={handleAddressSubmit} onBack={() => setShowAddressForm(false)} />
+            ) : currentOrder && orderStatus !== 'delivered' && orderStatus !== 'cancelled' ? (
+              // Display current order status if an order is active and not completed/cancelled
+              <div className="p-4">
+                <h3 className="text-lg font-semibold mb-4">Your Active Order</h3>
+                <OrderStatusTracker
+                  order={currentOrder}
+                  status={orderStatus}
+                  // These callbacks handle user interaction to clear the order
+                  onOrderComplete={() => clearCurrentOrder()}
+                  onOrderCancelled={() => clearCurrentOrder()}
+                  onTrackMore={() => { /* Implement navigation to a full tracking page if needed */ }}
+                />
+                <div className="mt-6 border-t pt-4">
+                  <p className="text-gray-600 text-sm mb-2">You have an ongoing order. Would you like to start a new one?</p>
+                  <Button
+                    onClick={startNewOrder} // Call the new startNewOrder function
+                    variant="outline"
+                    className="w-full"
+                  >
+                    Start a New Order
+                  </Button>
+                </div>
               </div>
             ) : (
-              <div className="space-y-4 p-4">
-                {items.map((item, index) => (
-                  <div
-                    key={`<span class="math-inline">\{item\.id\}\-</span>{index}`}
-                    className="flex items-start gap-4 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                  >
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = '/food-placeholder.png';
-                      }}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-start">
-                        <h3 className="font-semibold text-gray-800">{item.name}</h3>
-                        <p className="text-orange-600 font-bold whitespace-nowrap ml-2">
-                          {formatCurrency(item.totalPrice)}
-                        </p>
-                      </div>
-
-                      {item.selectedCustomizations?.length > 0 && (
-                        <div className="mt-1">
-                          <p className="text-xs text-gray-500 mb-1">Customizations:</p>
-                          <div className="flex flex-wrap gap-1">
-                            {item.selectedCustomizations.map((c, idx) => (
-                              <span
-                                key={idx}
-                                className="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded"
-                              >
-                                {c.name}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      <div className="flex items-center gap-2 mt-3">
-                        <Button
-                          onClick={() => onUpdateQuantity(item.id, item.quantity - 1, item.selectedCustomizations)}
-                          variant="outline"
-                          size="sm"
-                          className="w-8 h-8 p-0"
-                          disabled={item.quantity <= 1}
-                        >
-                          <Minus className="w-3 h-3" />
-                        </Button>
-                        <span className="w-8 text-center font-semibold">
-                          {item.quantity}
-                        </span>
-                        <Button
-                          onClick={() => onUpdateQuantity(item.id, item.quantity + 1, item.selectedCustomizations)}
-                          variant="outline"
-                          size="sm"
-                          className="w-8 h-8 p-0"
-                        >
-                          <Plus className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    </div>
+              // Default cart view: empty cart or populated cart
+              <>
+                {items.length === 0 ? (
+                  <div className="text-center py-12 text-gray-500">
+                    <ShoppingBag className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+                    <p className="text-lg font-medium">Your cart is empty.</p>
+                    <p className="text-sm">Add some delicious food to get started!</p>
                   </div>
-                ))}
-              </div>
+                ) : (
+                  <div className="p-4">
+                    {items.map((item) => (
+                      <div key={item.id} className="flex items-center justify-between py-3 border-b last:border-b-0">
+                        <div>
+                          <p className="font-medium text-gray-800">{item.name}</p>
+                          {item.selectedCustomizations && item.selectedCustomizations.length > 0 && (
+                            <p className="text-sm text-gray-500">
+                              {item.selectedCustomizations.map(c => c.name).join(', ')}
+                            </p>
+                          )}
+                          <p className="text-sm text-gray-600">{formatCurrency(item.price)}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => onUpdateQuantity(item.id, item.quantity - 1, item.selectedCustomizations)}
+                            disabled={item.quantity <= 1}
+                            className="w-8 h-8 text-gray-600 hover:bg-gray-100"
+                          >
+                            <Minus className="w-4 h-4" />
+                          </Button>
+                          <span className="font-medium text-gray-800">{item.quantity}</span>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => onUpdateQuantity(item.id, item.quantity + 1, item.selectedCustomizations)}
+                            className="w-8 h-8 text-gray-600 hover:bg-gray-100"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => onUpdateQuantity(item.id, 0, item.selectedCustomizations)} // Remove item
+                            className="w-8 h-8 text-red-500 hover:bg-red-50"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
             )}
           </div>
 
-          {/* Footer */}
-          {!currentOrder && !paymentLoading && !failedPaymentOrderId && items.length > 0 && ( // Use paymentLoading
-            <div className="border-t p-4 space-y-4 sticky bottom-0 bg-white">
-              <div className="flex justify-between items-center text-lg font-bold">
-                <span>Subtotal:</span>
-                <span>{formatCurrency(total)}</span>
+          {/* Footer - Only show if in the default cart view and items are present */}
+          {!isProcessingOrder && !failedPaymentOrderId && !(currentOrder && orderStatus !== 'delivered' && orderStatus !== 'cancelled') && items.length > 0 && !showAddressForm && (
+            <div className="p-4 border-t sticky bottom-0 bg-white z-10">
+              <div className="flex justify-between items-center mb-2">
+                <p className="text-gray-700">Subtotal:</p>
+                <p className="font-bold text-gray-800">{formatCurrency(total)}</p>
               </div>
-
-              <div className="flex justify-between items-center text-sm text-gray-500">
-                <span>Delivery Fee:</span>
-                <span>{formatCurrency(5)}</span>
+              <div className="flex justify-between items-center mb-4">
+                <p className="text-gray-700">Delivery Fee:</p>
+                <p className="font-bold text-gray-800">{formatCurrency(5)}</p>
               </div>
-
-              <div className="border-t pt-3 flex justify-between items-center text-xl font-bold">
-                <span>Total:</span>
-                <span className="text-orange-600">{formatCurrency(total + 5)}</span>
+              <div className="flex justify-between items-center text-lg font-bold text-gray-900 mb-4">
+                <p>Total:</p>
+                <p>{formatCurrency(total + 5)}</p>
               </div>
-
               <Button
                 onClick={handleCheckout}
-                disabled={paymentLoading} // Use paymentLoading
-                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 text-lg"
+                className="w-full bg-orange-500 hover:bg-orange-600"
+                disabled={items.length === 0 || isProcessingOrder}
               >
-                {paymentLoading ? ( // Use paymentLoading
-                  <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                ) : (
-                  <CreditCard className="w-5 h-5 mr-2" />
-                )}
-                {user ? 'Proceed to Payment' : 'Sign In to Order'}
+                Proceed to Checkout
               </Button>
-
-              <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                </svg>
-                <span>Secure payment powered by Paystack</span>
-              </div>
             </div>
           )}
+
+          {/* Auth Modal */}
+          <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} onAuthSuccess={handleAuthSuccess} />
         </div>
       </div>
-
-      {/* Address Form Modal */}
-      {showAddressForm && (
-        <DeliveryAddressForm
-          onAddressSubmit={handleAddressSubmit}
-          onCancel={() => {
-            setShowAddressForm(false);
-            setPaymentError(null);
-          }}
-          defaultAddress={user?.user_metadata?.address}
-          isLoading={paymentLoading} // Use paymentLoading
-        />
-      )}
-
-      {/* Auth Modal */}
-      <AuthModal
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-        onSuccess={handleAuthSuccess}
-        redirectMessage="To complete your order"
-      />
     </>
   );
 };
