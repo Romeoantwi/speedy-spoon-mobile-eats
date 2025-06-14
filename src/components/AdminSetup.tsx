@@ -39,24 +39,32 @@ const AdminSetup = () => {
     setLoading(true);
 
     try {
-      // Update user profile to admin type
-      const { error } = await supabase
+      // First, try to upsert the profile to ensure it exists
+      const { error: profileError } = await supabase
         .from('profiles')
-        .update({
-          user_type: 'admin'
-        })
-        .eq('id', user.id);
+        .upsert({
+          id: user.id,
+          user_type: 'admin',
+          full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Admin User'
+        });
 
-      if (error) throw error;
+      if (profileError) {
+        console.error('Profile upsert error:', profileError);
+        throw new Error('Failed to create/update profile: ' + profileError.message);
+      }
 
       toast({
         title: "Admin Account Created! 🎉",
         description: "You now have admin access to the restaurant dashboard",
       });
 
-      // Redirect to restaurant dashboard
-      window.location.href = '/restaurant-dashboard';
+      // Redirect to restaurant dashboard with a small delay
+      setTimeout(() => {
+        window.location.href = '/restaurant-dashboard';
+      }, 1000);
+
     } catch (error: any) {
+      console.error('Admin setup error:', error);
       toast({
         title: "Setup Failed",
         description: error.message || "Failed to create admin account",
@@ -69,58 +77,75 @@ const AdminSetup = () => {
 
   if (!user) {
     return (
-      <Card className="max-w-md mx-auto mt-8">
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Shield className="w-5 h-5 mr-2" />
-            Admin Setup
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-gray-600">Please sign in first to set up admin access.</p>
-        </CardContent>
-      </Card>
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 flex items-center justify-center p-4">
+        <Card className="max-w-md mx-auto">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Shield className="w-5 h-5 mr-2" />
+              Admin Setup
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-600 mb-4">Please sign in first to set up admin access.</p>
+            <Button onClick={() => window.location.href = '/'} className="w-full">
+              Go to Sign In
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
   return (
-    <Card className="max-w-md mx-auto mt-8">
-      <CardHeader>
-        <CardTitle className="flex items-center">
-          <Shield className="w-5 h-5 mr-2 text-orange-600" />
-          Restaurant Admin Setup
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium mb-2">Admin Setup Key</label>
-          <Input
-            type="password"
-            value={adminKey}
-            onChange={(e) => setAdminKey(e.target.value)}
-            placeholder="Enter admin setup key"
-            className="w-full"
-          />
-          <p className="text-xs text-gray-500 mt-1">
-            Contact system administrator for the setup key
-          </p>
-        </div>
-        
-        <Button
-          onClick={createAdmin}
-          disabled={loading || !adminKey}
-          className="w-full bg-orange-600 hover:bg-orange-700"
-        >
-          <Key className="w-4 h-4 mr-2" />
-          {loading ? 'Creating Admin...' : 'Create Admin Account'}
-        </Button>
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 flex items-center justify-center p-4">
+      <Card className="max-w-md mx-auto">
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Shield className="w-5 h-5 mr-2 text-orange-600" />
+            Restaurant Admin Setup
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-2">Admin Setup Key</label>
+            <Input
+              type="password"
+              value={adminKey}
+              onChange={(e) => setAdminKey(e.target.value)}
+              placeholder="Enter admin setup key"
+              className="w-full"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Contact system administrator for the setup key
+            </p>
+          </div>
+          
+          <Button
+            onClick={createAdmin}
+            disabled={loading || !adminKey}
+            className="w-full bg-orange-600 hover:bg-orange-700"
+          >
+            <Key className="w-4 h-4 mr-2" />
+            {loading ? 'Creating Admin...' : 'Create Admin Account'}
+          </Button>
 
-        <div className="text-xs text-gray-500 bg-gray-50 p-3 rounded">
-          <strong>Setup Key:</strong> SPEEDYSPOON_ADMIN_2024<br />
-          <em>For demonstration purposes only</em>
-        </div>
-      </CardContent>
-    </Card>
+          <div className="text-xs text-gray-500 bg-gray-50 p-3 rounded">
+            <strong>Setup Key:</strong> SPEEDYSPOON_ADMIN_2024<br />
+            <em>For demonstration purposes only</em>
+          </div>
+
+          <div className="text-center">
+            <Button
+              variant="ghost"
+              onClick={() => window.location.href = '/'}
+              className="text-gray-600 hover:text-gray-800 text-sm"
+            >
+              ← Back to Home
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
