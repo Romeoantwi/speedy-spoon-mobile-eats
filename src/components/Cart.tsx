@@ -119,7 +119,9 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
         phone: user.phone
       });
 
-      if (result && result.status === 'error') {
+      if (result && result.status === 'success') {
+        onClearCart();
+      } else if (result && result.status === 'error') {
         handlePaymentFailed(orderId, result.message);
       }
     } catch (error: any) {
@@ -217,7 +219,7 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
           ) : showAddressForm ? (
             <DeliveryAddressForm 
               onAddressSubmit={handleAddressSubmit} 
-              onBack={() => setShowAddressForm(false)} 
+              onCancel={() => setShowAddressForm(false)} 
             />
           ) : currentOrder && orderStatus !== 'delivered' && orderStatus !== 'cancelled' ? (
             <div className="p-4">
@@ -332,4 +334,3 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
 };
 
 export default Cart;
-

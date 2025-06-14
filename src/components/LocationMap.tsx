@@ -17,21 +17,23 @@ const LocationMap = ({ onLocationSelect, showDriverLocation = false, orderStatus
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Ghana locations for demo purposes
-  const ghanaLocations = [
-    { name: "East Legon, Accra", lat: 5.6307, lng: -0.1501, address: "East Legon, Accra, Ghana" },
-    { name: "Osu, Accra", lat: 5.5550, lng: -0.1816, address: "Osu, Accra, Ghana" },
-    { name: "Tema", lat: 5.6698, lng: -0.0166, address: "Tema, Ghana" },
-    { name: "Kumasi", lat: 6.6885, lng: -1.6244, address: "Kumasi, Ashanti Region, Ghana" },
-    { name: "Spintex Road", lat: 5.6070, lng: -0.1047, address: "Spintex Road, Accra, Ghana" },
-    { name: "Cantonments", lat: 5.5700, lng: -0.1850, address: "Cantonments, Accra, Ghana" },
+  // Ho, Volta Region locations for delivery service
+  const hoLocations = [
+    { name: "Ho Central", lat: 6.6078, lng: 0.4707, address: "Ho Central, Volta Region, Ghana" },
+    { name: "Ho Market Area", lat: 6.6102, lng: 0.4702, address: "Ho Market Area, Volta Region, Ghana" },
+    { name: "Ho Technical University", lat: 6.6047, lng: 0.4658, address: "Ho Technical University, Volta Region, Ghana" },
+    { name: "Bankoe, Ho", lat: 6.6150, lng: 0.4750, address: "Bankoe, Ho, Volta Region, Ghana" },
+    { name: "Dome, Ho", lat: 6.6020, lng: 0.4680, address: "Dome, Ho, Volta Region, Ghana" },
+    { name: "Kpodzi, Ho", lat: 6.5980, lng: 0.4720, address: "Kpodzi, Ho, Volta Region, Ghana" },
+    { name: "Ahoe, Ho", lat: 6.6180, lng: 0.4800, address: "Ahoe, Ho, Volta Region, Ghana" },
+    { name: "Fiave, Ho", lat: 6.5950, lng: 0.4650, address: "Fiave, Ho, Volta Region, Ghana" },
   ];
 
-  const [filteredLocations, setFilteredLocations] = useState(ghanaLocations);
+  const [filteredLocations, setFilteredLocations] = useState(hoLocations);
 
   useEffect(() => {
     // Filter locations based on search query
-    const filtered = ghanaLocations.filter(location =>
+    const filtered = hoLocations.filter(location =>
       location.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
     setFilteredLocations(filtered);
@@ -48,31 +50,44 @@ const LocationMap = ({ onLocationSelect, showDriverLocation = false, orderStatus
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          const location = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-            address: `Current Location (${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)})`
-          };
-          selectLocation(location);
+          // Check if the current location is within Ho, Volta Region (approximate bounds)
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          
+          // Ho, Volta Region approximate bounds
+          const isInHo = lat >= 6.58 && lat <= 6.63 && lng >= 0.45 && lng <= 0.49;
+          
+          if (isInHo) {
+            const location = {
+              lat: lat,
+              lng: lng,
+              address: `Current Location in Ho (${lat.toFixed(4)}, ${lng.toFixed(4)})`
+            };
+            selectLocation(location);
+          } else {
+            // Fallback to Ho Central if outside service area
+            const hoCenter = { lat: 6.6078, lng: 0.4707, address: "Ho Central, Volta Region, Ghana (Default - Outside Service Area)" };
+            selectLocation(hoCenter);
+          }
         },
         (error) => {
           console.error('Error getting location:', error);
-          // Fallback to Accra center
-          const accra = { lat: 5.6037, lng: -0.1870, address: "Accra, Ghana (Default)" };
-          selectLocation(accra);
+          // Fallback to Ho Central
+          const hoCenter = { lat: 6.6078, lng: 0.4707, address: "Ho Central, Volta Region, Ghana (Default)" };
+          selectLocation(hoCenter);
         }
       );
     } else {
-      // Fallback to Accra center
-      const accra = { lat: 5.6037, lng: -0.1870, address: "Accra, Ghana (Default)" };
-      selectLocation(accra);
+      // Fallback to Ho Central
+      const hoCenter = { lat: 6.6078, lng: 0.4707, address: "Ho Central, Volta Region, Ghana (Default)" };
+      selectLocation(hoCenter);
     }
   };
 
   useEffect(() => {
-    // Auto-select Accra as default
+    // Auto-select Ho Central as default
     if (!selectedLocation) {
-      selectLocation({ lat: 5.6037, lng: -0.1870, address: "Accra, Ghana" });
+      selectLocation({ lat: 6.6078, lng: 0.4707, address: "Ho Central, Volta Region, Ghana" });
     }
   }, []);
 
@@ -83,7 +98,7 @@ const LocationMap = ({ onLocationSelect, showDriverLocation = false, orderStatus
           <div className="relative flex-1">
             <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <Input
-              placeholder="Search for a location in Ghana..."
+              placeholder="Search for a location in Ho, Volta Region..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -97,19 +112,25 @@ const LocationMap = ({ onLocationSelect, showDriverLocation = false, orderStatus
 
         {searchQuery && (
           <div className="max-h-40 overflow-y-auto border rounded-lg bg-white">
-            {filteredLocations.map((location, index) => (
-              <button
-                key={index}
-                onClick={() => {
-                  selectLocation(location);
-                  setSearchQuery('');
-                }}
-                className="w-full text-left p-3 hover:bg-gray-50 border-b last:border-b-0 flex items-center"
-              >
-                <MapPin className="w-4 h-4 mr-2 text-gray-400" />
-                {location.name}
-              </button>
-            ))}
+            {filteredLocations.length > 0 ? (
+              filteredLocations.map((location, index) => (
+                <button
+                  key={index}
+                  onClick={() => {
+                    selectLocation(location);
+                    setSearchQuery('');
+                  }}
+                  className="w-full text-left p-3 hover:bg-gray-50 border-b last:border-b-0 flex items-center"
+                >
+                  <MapPin className="w-4 h-4 mr-2 text-gray-400" />
+                  {location.name}
+                </button>
+              ))
+            ) : (
+              <div className="p-3 text-gray-500 text-sm">
+                No locations found in Ho, Volta Region
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -128,12 +149,15 @@ const LocationMap = ({ onLocationSelect, showDriverLocation = false, orderStatus
               <p className="text-xs text-gray-500 mt-2">
                 {selectedLocation.lat.toFixed(4)}, {selectedLocation.lng.toFixed(4)}
               </p>
+              <div className="mt-2 text-xs text-orange-600 font-medium">
+                📍 Service Area: Ho, Volta Region Only
+              </div>
             </div>
           </div>
         ) : (
           <div className="text-center text-gray-500">
             <MapPin className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-            <p>Select a location</p>
+            <p>Select a location in Ho, Volta Region</p>
           </div>
         )}
         

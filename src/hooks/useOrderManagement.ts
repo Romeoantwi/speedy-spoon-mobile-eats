@@ -11,6 +11,18 @@ export const useOrderManagement = () => {
   const [loadingOrder, setLoadingOrder] = useState(false);
   const { toast } = useToast();
 
+  const clearCurrentOrderInternal = useCallback(() => {
+    setCurrentOrder(null);
+    setOrderStatus(null);
+    localStorage.removeItem('activeOrderId');
+    console.log('🗑️ Active order cleared.');
+    toast({
+      title: "Order Cleared",
+      description: "You can now browse or place a new order.",
+      variant: "default", 
+    });
+  }, [toast]);
+
   useEffect(() => {
     const loadActiveOrder = async () => {
       const storedOrderId = localStorage.getItem('activeOrderId');
@@ -86,7 +98,7 @@ export const useOrderManagement = () => {
             });
 
             if (newStatus === 'delivered' || newStatus === 'cancelled') {
-              clearCurrentOrder();
+              clearCurrentOrderInternal();
             }
           }
         }
@@ -97,7 +109,7 @@ export const useOrderManagement = () => {
       console.log(`🛑 Unsubscribing from order updates for order: ${currentOrder.id}`);
       supabase.removeChannel(channel);
     };
-  }, [currentOrder?.id, toast, clearCurrentOrder]);
+  }, [currentOrder?.id, toast, clearCurrentOrderInternal]);
 
   const createOrder = useCallback(async (cartItems: CartItem[], deliveryAddress: string): Promise<string | null> => {
     setLoadingOrder(true);
@@ -131,7 +143,6 @@ export const useOrderManagement = () => {
       }, 0);
       const totalAmount = subTotal + customizationsTotal;
 
-
       const now = new Date();
       const estimatedDeliveryTime = new Date(now.getTime() + (40 * 60 * 1000)); 
 
@@ -140,7 +151,7 @@ export const useOrderManagement = () => {
         .insert({
           customer_id: user.id,
           restaurant_id: 'speedyspoon-main',
-          items: orderItems as any, // Let Supabase handle JSONB conversion
+          items: orderItems as any,
           total_amount: totalAmount,
           delivery_fee: 5.00,
           status: 'placed',
@@ -178,7 +189,6 @@ export const useOrderManagement = () => {
         created_at: orderData.created_at,
         updated_at: orderData.updated_at,
         payment_status: orderData.payment_status as Order['payment_status'],
-        paystack_reference: orderData.paystack_reference,
       };
 
       setCurrentOrder(newOrder);
@@ -214,29 +224,12 @@ export const useOrderManagement = () => {
     }
   }, [currentOrder]);
 
-  const clearCurrentOrderInternal = useCallback(() => {
-    setCurrentOrder(null);
-    setOrderStatus(null);
-    localStorage.removeItem('activeOrderId');
-    console.log('🗑️ Active order cleared.');
-    toast({
-      title: "Order Cleared",
-      description: "You can now browse or place a new order.",
-      variant: "default", 
-    });
-  }, [toast]);
-  
-  // Expose clearCurrentOrderInternal as clearCurrentOrder
-  const clearCurrentOrderHandler = clearCurrentOrderInternal;
-
-
   return {
     currentOrder,
     orderStatus,
     loadingOrder,
     createOrder,
     updateOrderStatus,
-    clearCurrentOrder: clearCurrentOrderHandler,
+    clearCurrentOrder: clearCurrentOrderInternal,
   };
 };
-
