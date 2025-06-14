@@ -1,17 +1,13 @@
+
 // src/hooks/usePaystack.ts
 
 import { useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
-import type { Database } from "@/integrations/supabase/types";
+// import type { Database } from "@/integrations/supabase/types"; // Not used directly
 
 declare global {
   interface Window {
-    PaystackPop: {
-      setup: (options: PaystackPop.PaystackPopOptions) => {
-        openIframe: () => void;
-        closeIframe: () => void;
-      };
-    };
+    PaystackPop: any; // Simplified to any to avoid namespace issues with PaystackPop.PaystackPopOptions
   }
 }
 
@@ -27,7 +23,7 @@ interface PaymentResponse {
   status: 'success' | 'error' | 'cancelled';
   message: string;
   reference?: string;
-  authorization_url?: string;
+  authorization_url?: string; // This is not typically returned to this hook post-payment
 }
 
 export const usePaystack = () => {
@@ -45,7 +41,7 @@ export const usePaystack = () => {
         body: {
           action: 'initialize',
           email,
-          amount,
+          amount, // Amount is in major currency (e.g., GHS)
           orderId,
           customerName,
           phone
@@ -59,10 +55,12 @@ export const usePaystack = () => {
 
       if (!initData || !initData.data || !initData.data.authorization_url || !initData.data.reference) {
           console.error("Invalid response from paystack-payment (initialize):", initData);
-          throw new Error("Invalid response from payment initiation. Missing authorization URL or reference. Please contact support.");
+          // Provide more specific error if message exists
+          const message = initData?.message || "Invalid response from payment initiation. Missing authorization URL or reference.";
+          throw new Error(`${message} Please contact support.`);
       }
 
-      const { authorization_url, reference, access_code } = initData.data;
+      const { reference } = initData.data; // authorization_url and access_code are used by PaystackPop
       console.log("Payment initialization successful. Reference:", reference);
 
       // 2. Dynamically load Paystack inline script if not already present
@@ -87,86 +85,87 @@ export const usePaystack = () => {
 
       const paystackPublicKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY;
       if (!paystackPublicKey) {
-        throw new Error("Paystack Public Key (VITE_PAYSTACK_PUBLIC_KEY) not found in environment. Please add it to your .env.local file and restart the development server.");
+        throw new Error("Paystack Public Key (VITE_PAYSTACK_PUBLIC_KEY) not found. Please set it in your environment variables.");
       }
 
       const [firstname, lastname] = customerName ? customerName.split(' ') : ['', ''];
 
       // 3. Setup and open Paystack Pop-up
-      const handler = window.PaystackPop.setup({
-        key: paystackPublicKey,
-        email,
-        amount: Math.round(amount * 100),
-        ref: reference,
-        currency: 'GHS',
-        metadata: {
-          order_id: orderId,
-          customer_name: customerName,
-          customer_phone: phone,
-        },
-        channels: ['card', 'mobile_money', 'bank_transfer'],
+      // This promise will resolve or reject based on the Paystack callback/onClose events
+      return new Promise<PaymentResponse>((resolve) => {
+        const handler = window.PaystackPop.setup({
+          key: paystackPublicKey,
+          email,
+          amount: Math.round(amount * 100), // Amount to kobo/pesewas
+          ref: reference,
+          currency: 'GHS',
+          metadata: {
+            order_id: orderId,
+            customer_name: customerName,
+            customer_phone: phone,
+            // custom_fields: [{ display_name: "Order ID", variable_name: "order_id", value: orderId }]
+          },
+          channels: ['card', 'mobile_money', 'bank_transfer'], // Added bank_transfer
 
-        // **** CRUCIAL CHANGE HERE: WRAP THE ASYNC CALLBACK ****
-        callback: function(response: any) { // Changed to a regular function
-          (async () => { // Immediately invoked async function expression
-            console.log("Paystack callback received:", response);
-            setLoading(true);
-
-            try {
-              if (!response.reference) {
-                  throw new Error("Paystack callback did not provide a transaction reference. Cannot verify payment.");
+          callback: function(response: any) { 
+            (async () => {
+              console.log("Paystack callback received:", response);
+              setLoading(true); // Keep loading true during verification
+              try {
+                if (!response.reference) {
+                    throw new Error("Paystack callback did not provide a transaction reference.");
+                }
+  
+                console.log("Calling Supabase Edge Function: paystack-payment for verification for reference:", response.reference);
+                const { data: verifyData, error: verifyError } = await supabase.functions.invoke('paystack-payment', {
+                  body: {
+                    action: 'verify',
+                    reference: response.reference,
+                    orderId
+                  },
+                });
+  
+                if (verifyError) {
+                  console.error("Error verifying payment via Edge Function:", verifyError);
+                  setError(verifyError.message || 'Payment verification failed.');
+                  resolve({ status: 'error', message: verifyError.message || 'Payment verification failed.' });
+                  return;
+                }
+  
+                if (verifyData?.data?.status === 'success' || verifyData?.success === true) { // Check both possible success flags
+                  console.log("Payment successfully verified by the backend.");
+                  resolve({ status: 'success', message: 'Payment successful and verified.', reference: response.reference });
+                } else {
+                  const errorMessage = verifyData?.data?.gateway_response || verifyData?.message || 'Payment not successful after verification.';
+                  console.warn("Payment verification failed on backend:", verifyData);
+                  setError(errorMessage);
+                  resolve({ status: 'error', message: errorMessage, reference: response.reference });
+                }
+              } catch (verificationError: any) {
+                console.error("Verification process failed:", verificationError);
+                setError(verificationError.message || 'Payment verification failed due to an unexpected error.');
+                resolve({ status: 'error', message: verificationError.message || 'Payment verification failed.' });
+              } finally {
+                setLoading(false); 
               }
-
-              // 4. Call Supabase Edge Function to Verify Payment
-              console.log("Calling Supabase Edge Function: paystack-payment for verification for reference:", response.reference);
-              const { data: verifyData, error: verifyError } = await supabase.functions.invoke('paystack-payment', {
-                body: {
-                  action: 'verify',
-                  reference: response.reference,
-                  orderId
-                },
-              });
-
-              if (verifyError) {
-                console.error("Error verifying payment via Edge Function:", verifyError);
-                throw new Error(verifyError.message || 'Payment verification failed. Please check with support if payment went through.');
-              }
-
-              if (verifyData.data && verifyData.data.status === 'success') {
-                console.log("Payment successfully verified by the backend.");
-                // You might return a success object here if this was not an IIFE,
-                // but since it is, you'll need to handle the success state
-                // (e.g., navigation, UI update) directly in this callback.
-                // For simplicity for now, let's just log and update state.
-                return { status: 'success', message: 'Payment successful and verified.', reference: response.reference };
-              } else {
-                console.warn("Payment verification failed on backend:", verifyData.data);
-                throw new Error(verifyData.data?.gateway_response || 'Payment not successful. Please try again or contact support.');
-              }
-            } catch (verificationError: any) {
-              console.error("Verification process failed:", verificationError);
-              setError(verificationError.message || 'Payment verification failed due to an unexpected error.');
-              return { status: 'error', message: verificationError.message || 'Payment verification failed.' };
-            } finally {
-              setLoading(false);
-            }
-          })(); // Call the async function immediately
-        },
-        // **** END CRUCIAL CHANGE ****
-
-        onClose: () => {
-          console.log('Paystack Pop-up closed by user.');
-          setLoading(false);
-          setError('Payment cancelled by user.');
-        },
-        firstname,
-        lastname,
-        phone
+            })();
+          },
+          onClose: () => {
+            console.log('Paystack Pop-up closed by user.');
+            setLoading(false);
+            setError('Payment cancelled by user.');
+            resolve({ status: 'cancelled', message: 'Payment cancelled by user.' });
+          },
+          firstname: firstname || undefined, // Ensure undefined if empty
+          lastname: lastname || undefined,   // Ensure undefined if empty
+          phone: phone || undefined,         // Ensure undefined if empty
+        });
+  
+        handler.openIframe();
+        console.log("Paystack pop-up opened.");
+        // The promise resolves via callback or onClose, so no explicit return here for the promise.
+        // However, makePayment itself returns this promise.
       });
-
-      handler.openIframe();
-      console.log("Paystack pop-up opened.");
-      return undefined;
 
     } catch (err: any) {
       console.error("Error during makePayment execution:", err);

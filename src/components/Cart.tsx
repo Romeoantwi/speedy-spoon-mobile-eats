@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { X, Minus, Plus, ShoppingBag, CreditCard, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -32,16 +33,13 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
   const [failedPaymentOrderId, setFailedPaymentOrderId] = useState<string | null>(null);
   const [isProcessingOrder, setIsProcessingOrder] = useState(false);
 
-  // Synchronize paystackError with local paymentError state
   useEffect(() => {
     setPaymentError(paystackError);
   }, [paystackError]);
 
-  // Manage overall loading state based on order creation and payment processing
   useEffect(() => {
     setIsProcessingOrder(loadingOrder || paymentLoading);
   }, [loadingOrder, paymentLoading]);
-
 
   const handleCheckout = () => {
     if (items.length === 0) {
@@ -59,7 +57,7 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
     }
 
     setShowAddressForm(true);
-    setPaymentError(null); // Clear previous errors
+    setPaymentError(null);
   };
 
   const handlePaymentFailed = (orderId: string | null, errorMessage: string) => {
@@ -70,19 +68,18 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
       description: errorMessage || "There was an error processing your payment.",
       variant: "destructive"
     });
-    // setIsProcessingOrder will be updated by the useEffect linked to paymentLoading/loadingOrder
   };
 
   const handleRetryPayment = async () => {
     if (!failedPaymentOrderId || !user) return;
 
     try {
-      setPaymentError(null); // Clear previous error for retry
+      setPaymentError(null);
 
       const result = await makePayment(
         {
           email: user.email || '',
-          amount: total + 5, // Include delivery fee in total (GH₵ 5.00)
+          amount: total + 5,
           orderId: failedPaymentOrderId,
           customerName: user.user_metadata?.full_name,
           phone: user.phone
@@ -90,65 +87,54 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
       );
 
       if (result && result.status === 'success') {
-        onClearCart(); // Clear the cart as payment is successful
-        setFailedPaymentOrderId(null); // Clear failed state
-        // The success toast and order status update is handled by usePaystack callback
+        onClearCart(); 
+        setFailedPaymentOrderId(null);
       } else if (result && result.status === 'error') {
         handlePaymentFailed(failedPaymentOrderId, result.message);
       }
-      // If result is undefined, it means the Paystack pop-up was successfully opened,
-      // and the outcome (success/error/cancel) will be handled by its callback.\
     } catch (error: any) {
       console.error("Error during retry payment:", error);
       handlePaymentFailed(failedPaymentOrderId, error.message || "Payment failed. Please try again.");
     }
-    // No finally block for setIsProcessingOrder(false) here, as paymentLoading from hook will handle it
   };
 
   const handleAddressSubmit = async (address: string) => {
     if (!user) return;
 
     try {
-      setPaymentError(null); // Clear previous error
+      setPaymentError(null);
       setShowAddressForm(false);
 
-      // Create order first
       const orderId = await createOrder(items, address);
 
       if (!orderId) {
         throw new Error("Failed to create order. Please try again.");
       }
 
-      // Initiate Paystack payment via the hook
       const result = await makePayment({
         email: user.email || '',
-        amount: total + 5, // Include delivery fee in total (GH₵ 5.00)
-        orderId: orderId, // Pass the newly created orderId
+        amount: total + 5, 
+        orderId: orderId,
         customerName: user.user_metadata?.full_name,
         phone: user.phone
       });
 
-      // Check for immediate errors from makePayment (e.g., configuration issues)
       if (result && result.status === 'error') {
         handlePaymentFailed(orderId, result.message);
       }
-      // If result is undefined, it means the Paystack pop-up was successfully opened,
-      // and its callback will handle the final payment outcome.
     } catch (error: any) {
       console.error("Error creating order or initiating payment:", error);
-      // Pass null for orderId if order creation failed, otherwise pass the failed orderId
       handlePaymentFailed(error.orderId || null, error.message || "Payment failed. Please try again.");
     }
-    // No finally block for setIsProcessingOrder(false) here, as loadingOrder/paymentLoading from hooks will handle it
   };
 
   const handleAuthSuccess = () => {
     setShowAuthModal(false);
-    setShowAddressForm(true); // Proceed to address form after successful auth
+    setShowAddressForm(true);
   };
 
   const getTotalItems = () => {
-    return items.reduce((total, item) => total + item.quantity, 0);
+    return items.reduce((totalItems, item) => totalItems + item.quantity, 0);
   };
 
   const startNewOrder = () => {
@@ -194,7 +180,6 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
               <p className="text-gray-500">
                 {loadingOrder ? "Creating your order..." : "Please complete your payment with Paystack"}
               </p>
-
               {paymentError && (
                 <div className="mt-4 p-3 bg-red-50 text-red-600 rounded-md text-sm">
                   {paymentError}
@@ -206,9 +191,8 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
               <div className="bg-red-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
                 <X className="w-8 h-8 text-red-600" />
               </div>
-              <h3 className="xl font-bold text-gray-800 mb-2">Payment Failed</h3>
-              <p className="text-gray-600 mb-6">{paymentError}</p>
-
+              <h3 className="text-xl font-bold text-gray-800 mb-2">Payment Failed</h3>
+              <p className="text-gray-600 mb-6">{paymentError || "An unknown error occurred."}</p>
               <div className="flex gap-3 justify-center">
                 <Button
                   onClick={handleRetryPayment}
@@ -231,16 +215,18 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
               </div>
             </div>
           ) : showAddressForm ? (
-            <DeliveryAddressForm onSubmit={handleAddressSubmit} onBack={() => setShowAddressForm(false)} />
+            <DeliveryAddressForm 
+              onAddressSubmit={handleAddressSubmit} 
+              onBack={() => setShowAddressForm(false)} 
+            />
           ) : currentOrder && orderStatus !== 'delivered' && orderStatus !== 'cancelled' ? (
             <div className="p-4">
               <h3 className="text-lg font-semibold mb-4">Your Active Order</h3>
               <OrderStatusTracker
                 order={currentOrder}
-                status={orderStatus}
-                onOrderComplete={() => clearCurrentOrder()}
-                onOrderCancelled={() => clearCurrentOrder()}
-                onTrackMore={() => {}}
+                onOrderComplete={clearCurrentOrder}
+                onOrderCancelled={clearCurrentOrder}
+                onTrackMore={() => { /* Implement if needed */ }}
               />
               <div className="mt-6 border-t pt-4">
                 <p className="text-gray-600 text-sm mb-2">You have an ongoing order. Would you like to start a new one?</p>
@@ -264,7 +250,7 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
               ) : (
                 <div className="p-4">
                   {items.map((item) => (
-                    <div key={item.id} className="flex items-center justify-between py-3 border-b last:border-b-0">
+                    <div key={`${item.id}-${JSON.stringify(item.selectedCustomizations)}`} className="flex items-center justify-between py-3 border-b last:border-b-0">
                       <div>
                         <p className="font-medium text-gray-800">{item.name}</p>
                         {item.selectedCustomizations && item.selectedCustomizations.length > 0 && (
@@ -335,10 +321,15 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
           </div>
         )}
 
-        <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} onAuthSuccess={handleAuthSuccess} />
+        <AuthModal 
+          isOpen={showAuthModal} 
+          onClose={() => setShowAuthModal(false)} 
+          onSuccess={handleAuthSuccess} 
+        />
       </div>
     </div>
   );
 };
 
 export default Cart;
+
