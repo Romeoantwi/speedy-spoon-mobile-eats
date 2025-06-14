@@ -187,12 +187,13 @@ export const useOrderManagement = () => {
       const estimatedPrepTime = 25; // minutes
       const estimatedDeliveryTime = new Date(now.getTime() + (estimatedPrepTime + 15) * 60 * 1000);
 
+      // Convert orderItems to JSON format for database storage
       const { data: orderData, error: orderError } = await supabase
         .from('orders')
         .insert({
           customer_id: user.id,
           restaurant_id: 'speedyspoon-main',
-          items: orderItems,
+          items: orderItems as any, // Cast to any to handle JSON type
           total_amount: totalAmount,
           delivery_fee: deliveryFee,
           status: 'placed',
@@ -212,7 +213,7 @@ export const useOrderManagement = () => {
 
       const newOrder: Order = {
         ...orderData,
-        items: orderData.items as OrderItem[],
+        items: orderData.items as OrderItem[], // Cast from JSON to OrderItem[]
         status: orderData.status as Order['status'],
         payment_status: orderData.payment_status as Order['payment_status'],
       };
