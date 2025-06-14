@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { showStatusUpdateToast } from './order-management/toast';
 import { loadActiveOrder } from './order-management/loadActiveOrder';
-import { createOrder } from './order-management/createOrder';
+import { createOrderAfterPayment } from './order-management/createOrderAfterPayment';
 import { setupOrderRealtime } from './order-management/realtime';
 
 export const useOrderManagement = () => {
@@ -45,7 +45,7 @@ export const useOrderManagement = () => {
     }
   }, [currentOrder?.id, showStatusToast, clearCurrentOrderInternal]);
 
-  const placeOrder = async (orderData: { items: any[], address: string }) => {
+  const placeOrderAfterPayment = async (orderData: { items: any[], address: string }, paymentReference?: string) => {
     if (!user) {
       toast({
         title: "Authentication Required",
@@ -57,13 +57,14 @@ export const useOrderManagement = () => {
 
     setLoadingOrder(true);
     try {
-      return await createOrder(
+      return await createOrderAfterPayment(
         orderData.items,
         orderData.address,
         user,
         setCurrentOrder,
         setOrderStatus,
-        toast
+        toast,
+        paymentReference
       );
     } finally {
       setLoadingOrder(false);
@@ -78,7 +79,7 @@ export const useOrderManagement = () => {
     currentOrder,
     orderStatus,
     loadingOrder,
-    placeOrder,
+    placeOrderAfterPayment,
     clearCurrentOrder,
   };
 };

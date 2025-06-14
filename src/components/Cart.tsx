@@ -24,13 +24,13 @@ interface CartProps {
 const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: CartProps) => {
   const { toast } = useToast();
   const { user } = useAuth();
-  const { currentOrder, orderStatus, placeOrder, clearCurrentOrder, loadingOrder } = useOrderManagement();
+  const { currentOrder, orderStatus, placeOrderAfterPayment, clearCurrentOrder, loadingOrder } = useOrderManagement();
   const { makePayment, loading: paymentLoading, error: paystackError } = usePaystack();
 
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
-  const [failedPaymentOrderId, setFailedPaymentOrderId] = useState<string | null>(null);
+  const [pendingOrderData, setPendingOrderData] = useState<{ items: CartItem[], address: string } | null>(null);
 
   const isProcessingOrder = loadingOrder || paymentLoading;
 
@@ -60,65 +60,7 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
 
     setShowAddressForm(true);
     setPaymentError(null);
-    setFailedPaymentOrderId(null);
-  };
-
-  const handlePaymentError = (orderId: string | null, errorMessage: string) => {
-    setFailedPaymentOrderId(orderId);
-    setPaymentError(errorMessage);
-    toast({
-      title: "Payment Failed",
-      description: errorMessage || "There was an error processing your payment.",
-      variant: "destructive"
-    });
-  };
-
-  const processPayment = async (orderId: string) => {
-    if (!user) return null;
-
-    try {
-      const deliveryFee = 5;
-      const totalWithDelivery = total + deliveryFee;
-
-      const result = await makePayment({
-        email: user.email || '',
-        amount: totalWithDelivery,
-        orderId: orderId,
-        customerName: user.user_metadata?.full_name || '',
-        phone: user.phone || user.user_metadata?.phone_number || ''
-      });
-
-      return result;
-    } catch (error: any) {
-      console.error("Payment processing error:", error);
-      throw error;
-    }
-  };
-
-  const handleRetryPayment = async () => {
-    if (!failedPaymentOrderId || !user) return;
-
-    try {
-      setPaymentError(null);
-
-      const result = await processPayment(failedPaymentOrderId);
-
-      if (result?.status === 'success') {
-        onClearCart(); 
-        setFailedPaymentOrderId(null);
-        setPaymentError(null);
-        toast({
-          title: "Payment Successful",
-          description: "Your payment has been processed successfully!",
-          variant: "default"
-        });
-      } else if (result?.status === 'error') {
-        handlePaymentError(failedPaymentOrderId, result.message);
-      }
-    } catch (error: any) {
-      console.error("Retry payment error:", error);
-      handlePaymentError(failedPaymentOrderId, error.message || "Payment failed. Please try again.");
-    }
+    setPendingOrderData(null);
   };
 
   const handleAddressSubmit = async (address: string) => {
@@ -139,33 +81,60 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
         return;
       }
 
-      const orderId = await placeOrder({ items, address });
+      // Store order data for after payment
+      const orderData = { items, address };
+      setPendingOrderData(orderData);
 
-      if (!orderId) {
-        throw new Error("Failed to create order. Please try again.");
-      }
+      // Process payment first
+      const deliveryFee = 5;
+      const totalWithDelivery = total + deliveryFee;
 
-      const result = await processPayment(orderId);
+      const result = await makePayment({
+        email: user.email || '',
+        amount: totalWithDelivery,
+        orderId: `temp_${Date.now()}`, // Temporary ID for payment
+        customerName: user.user_metadata?.full_name || '',
+        phone: user.phone || user.user_metadata?.phone_number || ''
+      });
 
       if (result?.status === 'success') {
-        onClearCart();
-        toast({
-          title: "Order Successful",
-          description: "Your order has been placed and payment processed!",
-          variant: "default"
-        });
+        // Payment successful, now create the order
+        const orderId = await placeOrderAfterPayment(orderData, result.reference);
+        
+        if (orderId) {
+          onClearCart();
+          setPendingOrderData(null);
+          toast({
+            title: "Order Successful",
+            description: "Your payment has been processed and order has been placed!",
+            variant: "default"
+          });
+        }
       } else if (result?.status === 'error') {
-        handlePaymentError(orderId, result.message);
+        setPendingOrderData(null);
+        setPaymentError(result.message);
+        toast({
+          title: "Payment Failed",
+          description: result.message || "Payment processing failed. Please try again.",
+          variant: "destructive"
+        });
       } else if (result?.status === 'cancelled') {
+        setPendingOrderData(null);
         toast({
           title: "Payment Cancelled",
-          description: "You can retry payment anytime from your order.",
+          description: "Payment was cancelled. You can try again anytime.",
           variant: "default"
         });
       }
     } catch (error: any) {
-      console.error("Order creation error:", error);
-      handlePaymentError(null, error.message || "Failed to process order. Please try again.");
+      console.error("Payment/Order error:", error);
+      setPendingOrderData(null);
+      setPaymentError(error.message || "An error occurred. Please try again.");
+      toast({
+        title: "Error",
+        description: error.message || "An error occurred. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -181,7 +150,7 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
   const startNewOrder = () => {
     clearCurrentOrder();
     onClearCart();
-    setFailedPaymentOrderId(null);
+    setPendingOrderData(null);
     setPaymentError(null);
     setShowAddressForm(false);
   };
@@ -229,7 +198,7 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
               <Loader2 className="w-16 h-16 animate-spin text-orange-500 mx-auto mb-4" />
               <p className="text-lg font-medium">Processing Your Request...</p>
               <p className="text-gray-500">
-                {loadingOrder ? "Creating your order..." : "Please complete your payment with Paystack"}
+                {paymentLoading ? "Please complete your payment with Paystack" : "Creating your order..."}
               </p>
               {paymentError && (
                 <div className="mt-4 p-3 bg-red-50 text-red-600 rounded-md text-sm">
@@ -237,26 +206,30 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
                 </div>
               )}
             </div>
-          ) : failedPaymentOrderId ? (
+          ) : paymentError ? (
             <div className="text-center p-6">
               <div className="bg-red-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
                 <X className="w-8 h-8 text-red-600" />
               </div>
               <h3 className="text-xl font-bold text-gray-800 mb-2">Payment Failed</h3>
-              <p className="text-gray-600 mb-6">{paymentError || "An unknown error occurred."}</p>
+              <p className="text-gray-600 mb-6">{paymentError}</p>
               <div className="flex gap-3 justify-center">
                 <Button
-                  onClick={handleRetryPayment}
+                  onClick={() => {
+                    if (pendingOrderData) {
+                      handleAddressSubmit(pendingOrderData.address);
+                    }
+                  }}
                   className="bg-orange-500 hover:bg-orange-600"
-                  disabled={isProcessingOrder}
+                  disabled={isProcessingOrder || !pendingOrderData}
                 >
                   <CreditCard className="w-4 h-4 mr-2" />
                   Retry Payment
                 </Button>
                 <Button
                   onClick={() => {
-                    setFailedPaymentOrderId(null);
                     setPaymentError(null);
+                    setPendingOrderData(null);
                   }}
                   variant="outline"
                   disabled={isProcessingOrder}
@@ -346,7 +319,7 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
         </div>
 
         {/* Footer */}
-        {!isProcessingOrder && !failedPaymentOrderId && !hasActiveOrder && items.length > 0 && !showAddressForm && (
+        {!isProcessingOrder && !paymentError && !hasActiveOrder && items.length > 0 && !showAddressForm && (
           <div className="p-4 border-t sticky bottom-0 bg-white z-10">
             <div className="flex justify-between items-center mb-2">
               <p className="text-gray-700">Subtotal:</p>
@@ -365,7 +338,7 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
               className="w-full bg-orange-500 hover:bg-orange-600"
               disabled={items.length === 0 || isProcessingOrder}
             >
-              Proceed to Checkout
+              Pay Now & Place Order
             </Button>
           </div>
         )}

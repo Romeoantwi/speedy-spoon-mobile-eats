@@ -111,21 +111,6 @@ serve(async (req) => {
         throw new Error(paystackData.message || 'Payment initialization failed');
       }
 
-      // Update order with payment reference
-      const { error: dbError } = await supabaseClient
-        .from('orders')
-        .update({
-          payment_method: 'paystack',
-          paystack_reference: reference,
-          payment_status: 'pending'
-        })
-        .eq('id', orderId);
-
-      if (dbError) {
-        console.error("Database update error:", dbError);
-        throw new Error("Failed to update order status");
-      }
-
       console.log(`Payment initialized successfully: ${reference}`);
 
       return new Response(JSON.stringify(paystackData), {
@@ -166,40 +151,12 @@ serve(async (req) => {
       }
 
       const isSuccessful = verifyData.data.status === 'success';
-      const paymentStatus = isSuccessful ? 'paid' : 'failed';
 
-      // Update order status
-      const { error: updateError } = await supabaseClient
-        .from('orders')
-        .update({
-          payment_status: paymentStatus,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', orderId);
-
-      if (updateError) {
-        console.error("Database update error:", updateError);
-        throw new Error("Failed to update payment status");
-      }
-
-      // If payment successful, confirm the order
-      if (isSuccessful) {
-        const { error: confirmError } = await supabaseClient
-          .from('orders')
-          .update({ status: 'confirmed' })
-          .eq('id', orderId);
-
-        if (confirmError) {
-          console.error("Order confirmation error:", confirmError);
-          // Don't throw here as payment was successful
-        }
-      }
-
-      console.log(`Payment verification complete: ${paymentStatus} for order ${orderId}`);
+      console.log(`Payment verification complete: ${isSuccessful ? 'successful' : 'failed'} for order ${orderId}`);
 
       return new Response(JSON.stringify({
         success: isSuccessful,
-        status: paymentStatus,
+        status: isSuccessful ? 'success' : 'failed',
         data: verifyData.data
       }), {
         headers: corsHeaders,
