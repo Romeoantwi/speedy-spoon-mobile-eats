@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { X, Minus, Plus, ShoppingBag, CreditCard, Loader2 } from "lucide-react";
+import { X, Minus, Plus, ShoppingBag, CreditCard, Loader2, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CartItem } from "@/types/food";
 import { useToast } from "@/hooks/use-toast";
@@ -24,13 +24,14 @@ interface CartProps {
 const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: CartProps) => {
   const { toast } = useToast();
   const { user } = useAuth();
-  const { currentOrder, orderStatus, placeOrderAfterPayment, clearCurrentOrder, loadingOrder } = useOrderManagement();
+  const { currentOrder, orderStatus, recentOrders, placeOrderAfterPayment, clearCurrentOrder, viewOrderDetails, loadingOrder } = useOrderManagement();
   const { makePayment, loading: paymentLoading, error: paystackError } = usePaystack();
 
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [pendingOrderData, setPendingOrderData] = useState<{ items: CartItem[], address: string } | null>(null);
+  const [showOrderHistory, setShowOrderHistory] = useState(false);
 
   const isProcessingOrder = loadingOrder || paymentLoading;
 
@@ -148,11 +149,8 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
   };
 
   const startNewOrder = () => {
+    setShowOrderHistory(false);
     clearCurrentOrder();
-    onClearCart();
-    setPendingOrderData(null);
-    setPaymentError(null);
-    setShowAddressForm(false);
   };
 
   const handleStatusChange = (newStatus: string) => {
@@ -163,7 +161,6 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
 
   if (!isOpen) return null;
 
-  const hasActiveOrder = currentOrder && orderStatus !== 'delivered' && orderStatus !== 'cancelled';
   const deliveryFee = 5;
   const totalWithDelivery = total + deliveryFee;
 
@@ -173,22 +170,35 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b sticky top-0 bg-white z-10">
           <h2 className="text-xl font-bold text-gray-800">
-            {hasActiveOrder ? 'Current Order' : 'Your Order'}
-            {items.length > 0 && !hasActiveOrder && (
+            {showOrderHistory ? 'Order History' : currentOrder ? 'Current Order' : 'Your Order'}
+            {items.length > 0 && !currentOrder && !showOrderHistory && (
               <span className="ml-2 text-sm font-normal text-gray-500">
                 ({getTotalItems()} {getTotalItems() === 1 ? 'item' : 'items'})
               </span>
             )}
           </h2>
-          <Button
-            onClick={onClose}
-            variant="ghost"
-            size="icon"
-            className="hover:bg-gray-100"
-            disabled={isProcessingOrder}
-          >
-            <X className="w-5 h-5" />
-          </Button>
+          <div className="flex items-center gap-2">
+            {(currentOrder || recentOrders.length > 0) && !showOrderHistory && (
+              <Button
+                onClick={() => setShowOrderHistory(true)}
+                variant="ghost"
+                size="sm"
+                className="text-gray-600 hover:bg-gray-100"
+              >
+                <Clock className="w-4 h-4 mr-1" />
+                History
+              </Button>
+            )}
+            <Button
+              onClick={onClose}
+              variant="ghost"
+              size="icon"
+              className="hover:bg-gray-100"
+              disabled={isProcessingOrder}
+            >
+              <X className="w-5 h-5" />
+            </Button>
+          </div>
         </div>
 
         {/* Content */}
@@ -243,23 +253,85 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
               onAddressSubmit={handleAddressSubmit} 
               onCancel={() => setShowAddressForm(false)} 
             />
-          ) : hasActiveOrder ? (
+          ) : showOrderHistory ? (
             <div className="p-4">
-              <h3 className="text-lg font-semibold mb-4">Your Active Order</h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">Your Orders</h3>
+                <Button
+                  onClick={() => setShowOrderHistory(false)}
+                  variant="outline"
+                  size="sm"
+                >
+                  Back to Cart
+                </Button>
+              </div>
+              
+              {currentOrder && (
+                <div className="mb-6">
+                  <h4 className="font-medium text-gray-700 mb-2">Current Order</h4>
+                  <div 
+                    className="p-3 border rounded-lg cursor-pointer hover:bg-gray-50"
+                    onClick={() => {
+                      setShowOrderHistory(false);
+                      viewOrderDetails(currentOrder);
+                    }}
+                  >
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">#{currentOrder.id.slice(-8)}</span>
+                      <span className="text-sm text-gray-500 capitalize">{currentOrder.status}</span>
+                    </div>
+                    <p className="text-sm text-gray-600">{formatCurrency(currentOrder.total_amount)}</p>
+                  </div>
+                </div>
+              )}
+
+              {recentOrders.length > 0 && (
+                <div>
+                  <h4 className="font-medium text-gray-700 mb-2">Recent Orders</h4>
+                  <div className="space-y-2">
+                    {recentOrders.map((order) => (
+                      <div 
+                        key={order.id}
+                        className="p-3 border rounded-lg cursor-pointer hover:bg-gray-50"
+                        onClick={() => {
+                          setShowOrderHistory(false);
+                          viewOrderDetails(order);
+                        }}
+                      >
+                        <div className="flex justify-between items-center">
+                          <span className="font-medium">#{order.id.slice(-8)}</span>
+                          <span className="text-sm text-gray-500 capitalize">{order.status}</span>
+                        </div>
+                        <p className="text-sm text-gray-600">{formatCurrency(order.total_amount)}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {!currentOrder && recentOrders.length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  <p>No orders found</p>
+                </div>
+              )}
+            </div>
+          ) : currentOrder ? (
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">Order Tracking</h3>
+                <Button
+                  onClick={startNewOrder}
+                  variant="outline"
+                  size="sm"
+                  className="text-orange-600 border-orange-600 hover:bg-orange-50"
+                >
+                  Place New Order
+                </Button>
+              </div>
               <OrderStatusTracker
                 order={currentOrder}
                 onStatusChange={handleStatusChange}
               />
-              <div className="mt-6 border-t pt-4">
-                <p className="text-gray-600 text-sm mb-2">You have an ongoing order. Would you like to start a new one?</p>
-                <Button
-                  onClick={startNewOrder}
-                  variant="outline"
-                  className="w-full"
-                >
-                  Start a New Order
-                </Button>
-              </div>
             </div>
           ) : (
             <>
@@ -319,7 +391,7 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
         </div>
 
         {/* Footer */}
-        {!isProcessingOrder && !paymentError && !hasActiveOrder && items.length > 0 && !showAddressForm && (
+        {!isProcessingOrder && !paymentError && !currentOrder && !showOrderHistory && items.length > 0 && !showAddressForm && (
           <div className="p-4 border-t sticky bottom-0 bg-white z-10">
             <div className="flex justify-between items-center mb-2">
               <p className="text-gray-700">Subtotal:</p>

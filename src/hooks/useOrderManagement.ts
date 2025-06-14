@@ -14,6 +14,7 @@ export const useOrderManagement = () => {
   const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
   const [orderStatus, setOrderStatus] = useState<Order['status'] | null>(null);
   const [loadingOrder, setLoadingOrder] = useState(false);
+  const [recentOrders, setRecentOrders] = useState<Order[]>([]);
 
   const showStatusToast = useCallback((status: Order['status']) => {
     showStatusUpdateToast(toast, status);
@@ -57,7 +58,7 @@ export const useOrderManagement = () => {
 
     setLoadingOrder(true);
     try {
-      return await createOrderAfterPayment(
+      const orderId = await createOrderAfterPayment(
         orderData.items,
         orderData.address,
         user,
@@ -66,6 +67,13 @@ export const useOrderManagement = () => {
         toast,
         paymentReference
       );
+
+      // Add the new order to recent orders list
+      if (orderId && currentOrder) {
+        setRecentOrders(prev => [currentOrder, ...prev.slice(0, 4)]); // Keep last 5 orders
+      }
+
+      return orderId;
     } finally {
       setLoadingOrder(false);
     }
@@ -75,11 +83,19 @@ export const useOrderManagement = () => {
     clearCurrentOrderInternal();
   };
 
+  const viewOrderDetails = (order: Order) => {
+    setCurrentOrder(order);
+    setOrderStatus(order.status);
+    localStorage.setItem('activeOrderId', order.id);
+  };
+
   return {
     currentOrder,
     orderStatus,
     loadingOrder,
+    recentOrders,
     placeOrderAfterPayment,
     clearCurrentOrder,
+    viewOrderDetails,
   };
 };
