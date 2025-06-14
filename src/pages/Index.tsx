@@ -21,9 +21,16 @@ const Index = () => {
         {/* Header */}
         <div className="text-center mb-12 relative">
           <div className="absolute inset-0 bg-gradient-to-r from-red-600/20 to-transparent blur-3xl -z-10"></div>
-          <h1 className="text-6xl md:text-8xl font-bold mb-4 gradient-text">
-            SpeedySpoon 🔥
-          </h1>
+          <div className="flex justify-center mb-6">
+            <img 
+              src="/lovable-uploads/f00a84b9-d2a8-4c94-99a5-09f87a39e9ee.png" 
+              alt="SpeedySpoon Logo" 
+              className="h-32 w-auto"
+            />
+          </div>
+          <p className="text-3xl md:text-4xl font-bold text-red-400 mb-6 uppercase tracking-wider">
+            Get Your Feast No Sweat
+          </p>
           <p className="text-xl md:text-2xl text-gray-300 mb-6 max-w-3xl mx-auto">
             Premium Food Delivery Platform
           </p>

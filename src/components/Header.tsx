@@ -25,10 +25,11 @@ const Header = ({ cartItemCount = 0, onCartClick, userType = 'customer' }: Heade
       <header className="bg-black/90 backdrop-blur-md shadow-lg border-b border-red-600/30 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-red-600 to-red-700 rounded-lg flex items-center justify-center shadow-lg">
-              <span className="text-white font-bold text-xl">S</span>
-            </div>
-            <span className="text-2xl font-bold gradient-text">SpeedySpoon</span>
+            <img 
+              src="/lovable-uploads/f00a84b9-d2a8-4c94-99a5-09f87a39e9ee.png" 
+              alt="SpeedySpoon Logo" 
+              className="h-12 w-auto"
+            />
           </div>
           
           <nav className="hidden md:flex items-center space-x-8">

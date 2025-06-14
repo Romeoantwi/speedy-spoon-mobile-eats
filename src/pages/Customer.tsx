@@ -87,9 +87,11 @@ const Customer = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-red-950 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 bg-gradient-to-r from-red-600 to-red-700 rounded-lg flex items-center justify-center mx-auto mb-4 animate-pulse">
-            <span className="text-white font-bold text-2xl">S</span>
-          </div>
+          <img 
+            src="/lovable-uploads/f00a84b9-d2a8-4c94-99a5-09f87a39e9ee.png" 
+            alt="SpeedySpoon Logo" 
+            className="h-20 w-auto mx-auto mb-4 animate-pulse"
+          />
           <p className="text-gray-300 text-lg">Loading your culinary experience...</p>
         </div>
       </div>
@@ -108,9 +110,16 @@ const Customer = () => {
         <main className="container mx-auto px-4 py-8">
           <div className="text-center mb-12 relative">
             <div className="absolute inset-0 bg-gradient-to-r from-red-600/20 to-transparent blur-3xl -z-10"></div>
-            <h1 className="text-5xl md:text-7xl font-bold text-white mb-4">
-              Welcome to <span className="gradient-text">SpeedySpoon</span>
-            </h1>
+            <div className="flex justify-center mb-6">
+              <img 
+                src="/lovable-uploads/f00a84b9-d2a8-4c94-99a5-09f87a39e9ee.png" 
+                alt="SpeedySpoon Logo" 
+                className="h-24 w-auto"
+              />
+            </div>
+            <p className="text-2xl md:text-3xl font-bold text-red-400 mb-4 uppercase tracking-wider">
+              Get Your Feast No Sweat
+            </p>
             <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-8">
               Experience the finest Ghanaian cuisine delivered to your doorstep with lightning speed
             </p>
@@ -167,9 +176,16 @@ const Customer = () => {
       <main className="container mx-auto px-4 py-8">
         <div className="text-center mb-12 relative">
           <div className="absolute inset-0 bg-gradient-to-r from-red-600/20 to-transparent blur-3xl -z-10"></div>
-          <h1 className="text-5xl md:text-7xl font-bold text-white mb-4">
-            Welcome to <span className="gradient-text">SpeedySpoon</span>
-          </h1>
+          <div className="flex justify-center mb-6">
+            <img 
+              src="/lovable-uploads/f00a84b9-d2a8-4c94-99a5-09f87a39e9ee.png" 
+              alt="SpeedySpoon Logo" 
+              className="h-24 w-auto"
+            />
+          </div>
+          <p className="text-2xl md:text-3xl font-bold text-red-400 mb-4 uppercase tracking-wider">
+            Get Your Feast No Sweat
+          </p>
           <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-8">
             Experience the finest Ghanaian cuisine delivered to your doorstep with lightning speed
           </p>
