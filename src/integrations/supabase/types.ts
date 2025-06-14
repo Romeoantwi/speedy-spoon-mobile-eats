@@ -355,6 +355,7 @@ export type Database = {
           items: Json
           payment_method: string | null
           payment_status: string | null
+          paystack_reference: string | null
           restaurant_id: string
           special_instructions: string | null
           status: string
@@ -375,6 +376,7 @@ export type Database = {
           items: Json
           payment_method?: string | null
           payment_status?: string | null
+          paystack_reference?: string | null
           restaurant_id?: string
           special_instructions?: string | null
           status?: string
@@ -395,6 +397,7 @@ export type Database = {
           items?: Json
           payment_method?: string | null
           payment_status?: string | null
+          paystack_reference?: string | null
           restaurant_id?: string
           special_instructions?: string | null
           status?: string
@@ -514,6 +517,42 @@ export type Database = {
           phone_number?: string | null
           updated_at?: string
           user_type?: string | null
+        }
+        Relationships: []
+      }
+      reviews: {
+        Row: {
+          client_email: string
+          client_name: string
+          created_at: string
+          id: string
+          is_approved: boolean | null
+          project_type: string | null
+          rating: number
+          review_text: string
+          updated_at: string
+        }
+        Insert: {
+          client_email: string
+          client_name: string
+          created_at?: string
+          id?: string
+          is_approved?: boolean | null
+          project_type?: string | null
+          rating: number
+          review_text: string
+          updated_at?: string
+        }
+        Update: {
+          client_email?: string
+          client_name?: string
+          created_at?: string
+          id?: string
+          is_approved?: boolean | null
+          project_type?: string | null
+          rating?: number
+          review_text?: string
+          updated_at?: string
         }
         Relationships: []
       }
