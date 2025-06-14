@@ -15,67 +15,22 @@ export const useOrderManagement = () => {
     setCurrentOrder(null);
     setOrderStatus(null);
     localStorage.removeItem('activeOrderId');
-    console.log('🗑️ Active order cleared.');
-    toast({
-      title: "Order Cleared",
-      description: "You can now browse or place a new order.",
-      variant: "default", 
-    });
-  }, [toast]);
+    console.log('Active order cleared');
+  }, []);
 
+  // Load active order on mount
   useEffect(() => {
-    const loadActiveOrder = async () => {
-      const storedOrderId = localStorage.getItem('activeOrderId');
-      if (storedOrderId) {
-        setLoadingOrder(true);
-        try {
-          const { data: orderData, error } = await supabase
-            .from('orders')
-            .select('*')
-            .eq('id', storedOrderId)
-            .single();
-
-          if (error) {
-            console.error("Error fetching stored order:", error);
-            localStorage.removeItem('activeOrderId');
-            toast({
-              title: "Order Not Found",
-              description: "Your previous order could not be loaded.",
-              variant: "destructive",
-            });
-          } else if (orderData) {
-            const parsedItems = typeof orderData.items === 'string'
-              ? JSON.parse(orderData.items)
-              : orderData.items;
-
-            const loadedOrder: Order = {
-              ...orderData,
-              items: parsedItems as OrderItem[],
-              status: orderData.status as Order['status'],
-              payment_status: orderData.payment_status as Order['payment_status'],
-            };
-            setCurrentOrder(loadedOrder);
-            setOrderStatus(loadedOrder.status);
-            console.log('✅ Resuming tracking for order:', loadedOrder.id, 'Status:', loadedOrder.status);
-          }
-        } catch (err) {
-          console.error("Failed to load active order:", err);
-          localStorage.removeItem('activeOrderId');
-        } finally {
-          setLoadingOrder(false);
-        }
-      }
-    };
     loadActiveOrder();
-  }, [toast]);
+  }, []);
 
+  // Real-time order updates
   useEffect(() => {
     if (!currentOrder?.id) return;
 
-    console.log(`📡 Subscribing to real-time updates for order: ${currentOrder.id}`);
+    console.log(`Setting up real-time updates for order: ${currentOrder.id}`);
 
     const channel = supabase
-      .channel(`order_status_channel_${currentOrder.id}`)
+      .channel(`order_updates_${currentOrder.id}`)
       .on(
         'postgres_changes',
         {
@@ -87,18 +42,23 @@ export const useOrderManagement = () => {
         (payload: any) => {
           if (payload.new.status) {
             const newStatus = payload.new.status as Order['status'];
-            setCurrentOrder(prev => prev ? { ...prev, status: newStatus, payment_status: payload.new.payment_status as Order['payment_status'] } : null);
+            const newPaymentStatus = payload.new.payment_status as Order['payment_status'];
+            
+            setCurrentOrder(prev => prev ? { 
+              ...prev, 
+              status: newStatus, 
+              payment_status: newPaymentStatus 
+            } : null);
             setOrderStatus(newStatus);
-            console.log(`📱 Order status updated via Realtime: ${newStatus}`);
+            
+            console.log(`Order status updated: ${newStatus}`);
 
-            toast({
-              title: "Order Update",
-              description: `Your order status changed to: ${newStatus}`,
-              variant: 'default',
-            });
+            // Show appropriate toast
+            showStatusUpdateToast(newStatus);
 
+            // Clear order if completed
             if (newStatus === 'delivered' || newStatus === 'cancelled') {
-              clearCurrentOrderInternal();
+              setTimeout(() => clearCurrentOrderInternal(), 2000);
             }
           }
         }
@@ -106,10 +66,78 @@ export const useOrderManagement = () => {
       .subscribe();
 
     return () => {
-      console.log(`🛑 Unsubscribing from order updates for order: ${currentOrder.id}`);
+      console.log(`Cleaning up real-time subscription for order: ${currentOrder.id}`);
       supabase.removeChannel(channel);
     };
-  }, [currentOrder?.id, toast, clearCurrentOrderInternal]);
+  }, [currentOrder?.id, clearCurrentOrderInternal]);
+
+  const loadActiveOrder = async () => {
+    const storedOrderId = localStorage.getItem('activeOrderId');
+    if (!storedOrderId) return;
+
+    setLoadingOrder(true);
+    try {
+      const { data: orderData, error } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('id', storedOrderId)
+        .single();
+
+      if (error) {
+        console.error("Error loading order:", error);
+        localStorage.removeItem('activeOrderId');
+        return;
+      }
+
+      if (orderData) {
+        const parsedItems = typeof orderData.items === 'string'
+          ? JSON.parse(orderData.items)
+          : orderData.items;
+
+        const loadedOrder: Order = {
+          ...orderData,
+          items: parsedItems as OrderItem[],
+          status: orderData.status as Order['status'],
+          payment_status: orderData.payment_status as Order['payment_status'],
+        };
+
+        // Only track active orders
+        if (!['delivered', 'cancelled'].includes(loadedOrder.status)) {
+          setCurrentOrder(loadedOrder);
+          setOrderStatus(loadedOrder.status);
+          console.log('Resumed tracking order:', loadedOrder.id);
+        } else {
+          localStorage.removeItem('activeOrderId');
+        }
+      }
+    } catch (err) {
+      console.error("Failed to load active order:", err);
+      localStorage.removeItem('activeOrderId');
+    } finally {
+      setLoadingOrder(false);
+    }
+  };
+
+  const showStatusUpdateToast = (status: Order['status']) => {
+    const statusMessages = {
+      'placed': { title: "Order Placed", description: "Your order has been received" },
+      'confirmed': { title: "Order Confirmed", description: "Restaurant is preparing your order" },
+      'preparing': { title: "Order Preparing", description: "Your food is being prepared" },
+      'ready': { title: "Order Ready", description: "Your order is ready for pickup" },
+      'picked_up': { title: "Order Picked Up", description: "Driver is on the way to you" },
+      'delivered': { title: "Order Delivered", description: "Your order has been delivered!" },
+      'cancelled': { title: "Order Cancelled", description: "Your order has been cancelled" }
+    };
+
+    const message = statusMessages[status];
+    if (message) {
+      toast({
+        title: message.title,
+        description: message.description,
+        variant: status === 'cancelled' ? 'destructive' : 'default',
+      });
+    }
+  };
 
   const createOrder = useCallback(async (cartItems: CartItem[], deliveryAddress: string): Promise<string | null> => {
     setLoadingOrder(true);
@@ -121,73 +149,71 @@ export const useOrderManagement = () => {
           description: "Please log in to place an order.",
           variant: "destructive",
         });
-        throw new Error('No authenticated user');
+        return null;
       }
 
-      const orderItems: OrderItem[] = cartItems.map(item => ({
-        food_item_id: item.id,
-        name: item.name,
-        price: item.price,
-        quantity: item.quantity,
-        customizations: item.selectedCustomizations?.map(c => ({
-          id: c.id,
-          name: c.name,
-          price: c.price
-        })) || [],
-        total_price: item.totalPrice 
-      }));
-      
-      const subTotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-      const customizationsTotal = cartItems.reduce((sum, item) => {
-        return sum + (item.selectedCustomizations?.reduce((s,c) => s + c.price, 0) || 0) * item.quantity;
-      }, 0);
-      const totalAmount = subTotal + customizationsTotal;
+      // Validate cart items
+      if (!cartItems || cartItems.length === 0) {
+        throw new Error('Cart is empty');
+      }
 
+      // Validate delivery address
+      if (!deliveryAddress || deliveryAddress.trim().length < 10) {
+        throw new Error('Please provide a valid delivery address');
+      }
+
+      const orderItems: OrderItem[] = cartItems.map(item => {
+        const customizationsTotal = item.selectedCustomizations?.reduce((sum, c) => sum + c.price, 0) || 0;
+        return {
+          food_item_id: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          customizations: item.selectedCustomizations?.map(c => ({
+            id: c.id,
+            name: c.name,
+            price: c.price
+          })) || [],
+          total_price: (item.price + customizationsTotal) * item.quantity
+        };
+      });
+      
+      const subTotal = orderItems.reduce((sum, item) => sum + item.total_price, 0);
+      const deliveryFee = 5.00;
+      const totalAmount = subTotal + deliveryFee;
+
+      // Calculate estimated times
       const now = new Date();
-      const estimatedDeliveryTime = new Date(now.getTime() + (40 * 60 * 1000)); 
+      const estimatedPrepTime = 25; // minutes
+      const estimatedDeliveryTime = new Date(now.getTime() + (estimatedPrepTime + 15) * 60 * 1000);
 
       const { data: orderData, error: orderError } = await supabase
         .from('orders')
         .insert({
           customer_id: user.id,
           restaurant_id: 'speedyspoon-main',
-          items: orderItems as any,
+          items: orderItems,
           total_amount: totalAmount,
-          delivery_fee: 5.00,
+          delivery_fee: deliveryFee,
           status: 'placed',
-          delivery_address: deliveryAddress,
-          estimated_prep_time: 25,
+          delivery_address: deliveryAddress.trim(),
+          estimated_prep_time: estimatedPrepTime,
           estimated_delivery_time: estimatedDeliveryTime.toISOString(),
-          customer_phone: user.phone || user.user_metadata?.phone,
-          payment_status: 'pending' as Order['payment_status'],
+          customer_phone: user.phone || user.user_metadata?.phone_number || '',
+          payment_status: 'pending',
         })
         .select()
         .single();
 
       if (orderError) {
-        throw orderError;
+        console.error('Order creation error:', orderError);
+        throw new Error('Failed to create order. Please try again.');
       }
 
-      const parsedOrderItems = typeof orderData.items === 'string'
-        ? JSON.parse(orderData.items)
-        : orderData.items;
-
       const newOrder: Order = {
-        id: orderData.id,
-        customer_id: orderData.customer_id,
-        restaurant_id: orderData.restaurant_id,
-        driver_id: orderData.driver_id,
-        items: parsedOrderItems as OrderItem[],
-        total_amount: orderData.total_amount,
-        delivery_fee: orderData.delivery_fee,
+        ...orderData,
+        items: orderData.items as OrderItem[],
         status: orderData.status as Order['status'],
-        delivery_address: orderData.delivery_address,
-        customer_phone: orderData.customer_phone,
-        special_instructions: orderData.special_instructions,
-        estimated_prep_time: orderData.estimated_prep_time,
-        estimated_delivery_time: orderData.estimated_delivery_time,
-        created_at: orderData.created_at,
-        updated_at: orderData.updated_at,
         payment_status: orderData.payment_status as Order['payment_status'],
       };
 
@@ -195,7 +221,7 @@ export const useOrderManagement = () => {
       setOrderStatus('placed');
       localStorage.setItem('activeOrderId', newOrder.id);
 
-      console.log('🍽️ Order created and sent to restaurant:', newOrder.id);
+      console.log('Order created successfully:', newOrder.id);
       toast({
         title: "Order Placed",
         description: "Your order has been successfully placed!",
@@ -220,7 +246,7 @@ export const useOrderManagement = () => {
     if (currentOrder) {
       setCurrentOrder(prev => prev ? { ...prev, status: newStatus } : null);
       setOrderStatus(newStatus);
-      console.log(`📱 Order status updated locally: ${newStatus}`);
+      console.log(`Order status updated locally: ${newStatus}`);
     }
   }, [currentOrder]);
 

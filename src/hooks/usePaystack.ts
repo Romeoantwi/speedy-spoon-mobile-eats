@@ -1,13 +1,10 @@
 
-// src/hooks/usePaystack.ts
-
 import { useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
-// import type { Database } from "@/integrations/supabase/types"; // Not used directly
 
 declare global {
   interface Window {
-    PaystackPop: any; // Simplified to any to avoid namespace issues with PaystackPop.PaystackPopOptions
+    PaystackPop: any;
   }
 }
 
@@ -23,7 +20,6 @@ interface PaymentResponse {
   status: 'success' | 'error' | 'cancelled';
   message: string;
   reference?: string;
-  authorization_url?: string; // This is not typically returned to this hook post-payment
 }
 
 export const usePaystack = () => {
@@ -35,13 +31,25 @@ export const usePaystack = () => {
     setError(null);
 
     try {
-      // 1. Call Supabase Edge Function to Initialize Payment
-      console.log("Calling Supabase Edge Function: paystack-payment for initialization", { email, amount, orderId, customerName, phone });
+      // Validate inputs
+      if (!email || !amount || amount <= 0 || !orderId) {
+        throw new Error('Invalid payment details provided');
+      }
+
+      // Get Paystack public key
+      const paystackPublicKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY;
+      if (!paystackPublicKey) {
+        throw new Error('Paystack configuration error. Please contact support.');
+      }
+
+      console.log("Initializing payment for order:", orderId, "Amount:", amount);
+
+      // Initialize payment with Supabase Edge Function
       const { data: initData, error: initError } = await supabase.functions.invoke('paystack-payment', {
         body: {
           action: 'initialize',
           email,
-          amount, // Amount is in major currency (e.g., GHS)
+          amount,
           orderId,
           customerName,
           phone
@@ -49,74 +57,56 @@ export const usePaystack = () => {
       });
 
       if (initError) {
-        console.error("Error initializing payment via Edge Function:", initError);
-        throw new Error(initError.message || 'Payment initiation failed. Please try again.');
+        console.error("Payment initialization error:", initError);
+        throw new Error(initError.message || 'Failed to initialize payment');
       }
 
-      if (!initData || !initData.data || !initData.data.authorization_url || !initData.data.reference) {
-          console.error("Invalid response from paystack-payment (initialize):", initData);
-          // Provide more specific error if message exists
-          const message = initData?.message || "Invalid response from payment initiation. Missing authorization URL or reference.";
-          throw new Error(`${message} Please contact support.`);
+      if (!initData?.status || !initData?.data?.reference) {
+        console.error("Invalid initialization response:", initData);
+        throw new Error('Invalid payment initialization response');
       }
 
-      const { reference } = initData.data; // authorization_url and access_code are used by PaystackPop
-      console.log("Payment initialization successful. Reference:", reference);
+      const { reference } = initData.data;
+      console.log("Payment initialized with reference:", reference);
 
-      // 2. Dynamically load Paystack inline script if not already present
+      // Load Paystack script if needed
       if (!window.PaystackPop) {
-        console.log("Paystack script not found, dynamically loading...");
-        const script = document.createElement('script');
-        script.src = 'https://js.paystack.co/v1/inline.js';
-        script.async = true;
-        document.body.appendChild(script);
-
-        await new Promise<void>((resolve, reject) => {
-          script.onload = () => {
-            console.log("Paystack script loaded.");
-            resolve();
-          };
-          script.onerror = () => {
-            console.error("Failed to load Paystack script.");
-            reject(new Error('Failed to load Paystack script. Please check your internet connection.'));
-          };
-        });
+        await loadPaystackScript();
       }
 
-      const paystackPublicKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY;
-      if (!paystackPublicKey) {
-        throw new Error("Paystack Public Key (VITE_PAYSTACK_PUBLIC_KEY) not found. Please set it in your environment variables.");
-      }
-
+      // Setup payment parameters
       const [firstname, lastname] = customerName ? customerName.split(' ') : ['', ''];
 
-      // 3. Setup and open Paystack Pop-up
-      // This promise will resolve or reject based on the Paystack callback/onClose events
+      // Create and execute payment
       return new Promise<PaymentResponse>((resolve) => {
-        const handler = window.PaystackPop.setup({
-          key: paystackPublicKey,
-          email,
-          amount: Math.round(amount * 100), // Amount to kobo/pesewas
-          ref: reference,
-          currency: 'GHS',
-          metadata: {
-            order_id: orderId,
-            customer_name: customerName,
-            customer_phone: phone,
-            // custom_fields: [{ display_name: "Order ID", variable_name: "order_id", value: orderId }]
-          },
-          channels: ['card', 'mobile_money', 'bank_transfer'], // Added bank_transfer
+        try {
+          const handler = window.PaystackPop.setup({
+            key: paystackPublicKey,
+            email,
+            amount: Math.round(amount * 100), // Convert to kobo
+            ref: reference,
+            currency: 'GHS',
+            metadata: {
+              order_id: orderId,
+              customer_name: customerName || '',
+              customer_phone: phone || '',
+            },
+            channels: ['card', 'mobile_money', 'bank_transfer'],
+            firstname: firstname || undefined,
+            lastname: lastname || undefined,
+            phone: phone || undefined,
 
-          callback: function(response: any) { 
-            (async () => {
-              console.log("Paystack callback received:", response);
-              setLoading(true); // Keep loading true during verification
+            callback: async (response: any) => {
+              console.log("Payment callback received:", response);
+              
+              if (!response.reference) {
+                setError("Invalid payment response");
+                resolve({ status: 'error', message: 'Invalid payment response' });
+                return;
+              }
+
               try {
-                if (!response.reference) {
-                    throw new Error("Paystack callback did not provide a transaction reference.");
-                }
-  
-                console.log("Calling Supabase Edge Function: paystack-payment for verification for reference:", response.reference);
+                // Verify payment
                 const { data: verifyData, error: verifyError } = await supabase.functions.invoke('paystack-payment', {
                   body: {
                     action: 'verify',
@@ -124,55 +114,85 @@ export const usePaystack = () => {
                     orderId
                   },
                 });
-  
+
                 if (verifyError) {
-                  console.error("Error verifying payment via Edge Function:", verifyError);
-                  setError(verifyError.message || 'Payment verification failed.');
-                  resolve({ status: 'error', message: verifyError.message || 'Payment verification failed.' });
+                  console.error("Payment verification error:", verifyError);
+                  setError(verifyError.message || 'Payment verification failed');
+                  resolve({ status: 'error', message: verifyError.message || 'Payment verification failed' });
                   return;
                 }
-  
-                if (verifyData?.data?.status === 'success' || verifyData?.success === true) { // Check both possible success flags
-                  console.log("Payment successfully verified by the backend.");
-                  resolve({ status: 'success', message: 'Payment successful and verified.', reference: response.reference });
+
+                if (verifyData?.success === true || verifyData?.data?.status === 'success') {
+                  console.log("Payment successfully verified");
+                  resolve({ 
+                    status: 'success', 
+                    message: 'Payment successful', 
+                    reference: response.reference 
+                  });
                 } else {
-                  const errorMessage = verifyData?.data?.gateway_response || verifyData?.message || 'Payment not successful after verification.';
-                  console.warn("Payment verification failed on backend:", verifyData);
+                  const errorMessage = verifyData?.data?.gateway_response || 'Payment verification failed';
+                  console.warn("Payment verification failed:", verifyData);
                   setError(errorMessage);
-                  resolve({ status: 'error', message: errorMessage, reference: response.reference });
+                  resolve({ status: 'error', message: errorMessage });
                 }
-              } catch (verificationError: any) {
-                console.error("Verification process failed:", verificationError);
-                setError(verificationError.message || 'Payment verification failed due to an unexpected error.');
-                resolve({ status: 'error', message: verificationError.message || 'Payment verification failed.' });
+              } catch (verifyErr: any) {
+                console.error("Verification process error:", verifyErr);
+                setError('Payment verification failed');
+                resolve({ status: 'error', message: 'Payment verification failed' });
               } finally {
-                setLoading(false); 
+                setLoading(false);
               }
-            })();
-          },
-          onClose: () => {
-            console.log('Paystack Pop-up closed by user.');
-            setLoading(false);
-            setError('Payment cancelled by user.');
-            resolve({ status: 'cancelled', message: 'Payment cancelled by user.' });
-          },
-          firstname: firstname || undefined, // Ensure undefined if empty
-          lastname: lastname || undefined,   // Ensure undefined if empty
-          phone: phone || undefined,         // Ensure undefined if empty
-        });
-  
-        handler.openIframe();
-        console.log("Paystack pop-up opened.");
-        // The promise resolves via callback or onClose, so no explicit return here for the promise.
-        // However, makePayment itself returns this promise.
+            },
+
+            onClose: () => {
+              console.log('Payment cancelled by user');
+              setLoading(false);
+              setError('Payment cancelled');
+              resolve({ status: 'cancelled', message: 'Payment was cancelled' });
+            },
+          });
+
+          handler.openIframe();
+        } catch (popupError: any) {
+          console.error("Paystack popup error:", popupError);
+          setLoading(false);
+          setError('Failed to open payment window');
+          resolve({ status: 'error', message: 'Failed to open payment window' });
+        }
       });
 
     } catch (err: any) {
-      console.error("Error during makePayment execution:", err);
-      setError(err.message || "An unexpected error occurred during payment initiation.");
+      console.error("Payment process error:", err);
+      const errorMessage = err.message || 'Payment failed';
+      setError(errorMessage);
       setLoading(false);
-      return { status: 'error', message: err.message || "An unexpected error occurred during payment." };
+      return { status: 'error', message: errorMessage };
     }
+  };
+
+  const loadPaystackScript = (): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      if (window.PaystackPop) {
+        resolve();
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src = 'https://js.paystack.co/v1/inline.js';
+      script.async = true;
+      
+      script.onload = () => {
+        console.log("Paystack script loaded successfully");
+        resolve();
+      };
+      
+      script.onerror = () => {
+        console.error("Failed to load Paystack script");
+        reject(new Error('Failed to load Paystack script'));
+      };
+      
+      document.head.appendChild(script);
+    });
   };
 
   return { makePayment, loading, error };

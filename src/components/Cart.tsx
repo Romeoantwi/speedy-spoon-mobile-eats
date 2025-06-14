@@ -31,25 +31,27 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [failedPaymentOrderId, setFailedPaymentOrderId] = useState<string | null>(null);
-  const [isProcessingOrder, setIsProcessingOrder] = useState(false);
+
+  const isProcessingOrder = loadingOrder || paymentLoading;
 
   useEffect(() => {
     setPaymentError(paystackError);
   }, [paystackError]);
 
-  useEffect(() => {
-    setIsProcessingOrder(loadingOrder || paymentLoading);
-  }, [loadingOrder, paymentLoading]);
-
-  const handleCheckout = () => {
+  const validateCart = () => {
     if (items.length === 0) {
       toast({
         title: "Empty Cart",
         description: "Your cart is empty. Add some items to proceed.",
         variant: "destructive"
       });
-      return;
+      return false;
     }
+    return true;
+  };
+
+  const handleCheckout = () => {
+    if (!validateCart()) return;
 
     if (!user) {
       setShowAuthModal(true);
@@ -58,9 +60,10 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
 
     setShowAddressForm(true);
     setPaymentError(null);
+    setFailedPaymentOrderId(null);
   };
 
-  const handlePaymentFailed = (orderId: string | null, errorMessage: string) => {
+  const handlePaymentError = (orderId: string | null, errorMessage: string) => {
     setFailedPaymentOrderId(orderId);
     setPaymentError(errorMessage);
     toast({
@@ -70,31 +73,51 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
     });
   };
 
+  const processPayment = async (orderId: string) => {
+    if (!user) return null;
+
+    try {
+      const deliveryFee = 5;
+      const totalWithDelivery = total + deliveryFee;
+
+      const result = await makePayment({
+        email: user.email || '',
+        amount: totalWithDelivery,
+        orderId: orderId,
+        customerName: user.user_metadata?.full_name || '',
+        phone: user.phone || user.user_metadata?.phone_number || ''
+      });
+
+      return result;
+    } catch (error: any) {
+      console.error("Payment processing error:", error);
+      throw error;
+    }
+  };
+
   const handleRetryPayment = async () => {
     if (!failedPaymentOrderId || !user) return;
 
     try {
       setPaymentError(null);
 
-      const result = await makePayment(
-        {
-          email: user.email || '',
-          amount: total + 5,
-          orderId: failedPaymentOrderId,
-          customerName: user.user_metadata?.full_name,
-          phone: user.phone
-        }
-      );
+      const result = await processPayment(failedPaymentOrderId);
 
-      if (result && result.status === 'success') {
+      if (result?.status === 'success') {
         onClearCart(); 
         setFailedPaymentOrderId(null);
-      } else if (result && result.status === 'error') {
-        handlePaymentFailed(failedPaymentOrderId, result.message);
+        setPaymentError(null);
+        toast({
+          title: "Payment Successful",
+          description: "Your payment has been processed successfully!",
+          variant: "default"
+        });
+      } else if (result?.status === 'error') {
+        handlePaymentError(failedPaymentOrderId, result.message);
       }
     } catch (error: any) {
-      console.error("Error during retry payment:", error);
-      handlePaymentFailed(failedPaymentOrderId, error.message || "Payment failed. Please try again.");
+      console.error("Retry payment error:", error);
+      handlePaymentError(failedPaymentOrderId, error.message || "Payment failed. Please try again.");
     }
   };
 
@@ -105,28 +128,44 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
       setPaymentError(null);
       setShowAddressForm(false);
 
+      // Validate address
+      if (!address || address.trim().length < 10) {
+        toast({
+          title: "Invalid Address",
+          description: "Please provide a complete delivery address.",
+          variant: "destructive"
+        });
+        setShowAddressForm(true);
+        return;
+      }
+
       const orderId = await createOrder(items, address);
 
       if (!orderId) {
         throw new Error("Failed to create order. Please try again.");
       }
 
-      const result = await makePayment({
-        email: user.email || '',
-        amount: total + 5, 
-        orderId: orderId,
-        customerName: user.user_metadata?.full_name,
-        phone: user.phone
-      });
+      const result = await processPayment(orderId);
 
-      if (result && result.status === 'success') {
+      if (result?.status === 'success') {
         onClearCart();
-      } else if (result && result.status === 'error') {
-        handlePaymentFailed(orderId, result.message);
+        toast({
+          title: "Order Successful",
+          description: "Your order has been placed and payment processed!",
+          variant: "default"
+        });
+      } else if (result?.status === 'error') {
+        handlePaymentError(orderId, result.message);
+      } else if (result?.status === 'cancelled') {
+        toast({
+          title: "Payment Cancelled",
+          description: "You can retry payment anytime from your order.",
+          variant: "default"
+        });
       }
     } catch (error: any) {
-      console.error("Error creating order or initiating payment:", error);
-      handlePaymentFailed(error.orderId || null, error.message || "Payment failed. Please try again.");
+      console.error("Order creation error:", error);
+      handlePaymentError(null, error.message || "Failed to process order. Please try again.");
     }
   };
 
@@ -147,7 +186,17 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
     setShowAddressForm(false);
   };
 
+  const handleStatusChange = (newStatus: string) => {
+    if (newStatus === 'delivered' || newStatus === 'cancelled') {
+      clearCurrentOrder();
+    }
+  };
+
   if (!isOpen) return null;
+
+  const hasActiveOrder = currentOrder && orderStatus !== 'delivered' && orderStatus !== 'cancelled';
+  const deliveryFee = 5;
+  const totalWithDelivery = total + deliveryFee;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end md:items-center justify-center">
@@ -155,8 +204,8 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b sticky top-0 bg-white z-10">
           <h2 className="text-xl font-bold text-gray-800">
-            {currentOrder && orderStatus !== 'delivered' && orderStatus !== 'cancelled' ? 'Current Order' : 'Your Order'}
-            {items.length > 0 && !(currentOrder && orderStatus !== 'delivered' && orderStatus !== 'cancelled') && (
+            {hasActiveOrder ? 'Current Order' : 'Your Order'}
+            {items.length > 0 && !hasActiveOrder && (
               <span className="ml-2 text-sm font-normal text-gray-500">
                 ({getTotalItems()} {getTotalItems() === 1 ? 'item' : 'items'})
               </span>
@@ -221,16 +270,12 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
               onAddressSubmit={handleAddressSubmit} 
               onCancel={() => setShowAddressForm(false)} 
             />
-          ) : currentOrder && orderStatus !== 'delivered' && orderStatus !== 'cancelled' ? (
+          ) : hasActiveOrder ? (
             <div className="p-4">
               <h3 className="text-lg font-semibold mb-4">Your Active Order</h3>
               <OrderStatusTracker
                 order={currentOrder}
-                onStatusChange={(newStatus) => {
-                  if (newStatus === 'delivered' || newStatus === 'cancelled') {
-                    clearCurrentOrder();
-                  }
-                }}
+                onStatusChange={handleStatusChange}
               />
               <div className="mt-6 border-t pt-4">
                 <p className="text-gray-600 text-sm mb-2">You have an ongoing order. Would you like to start a new one?</p>
@@ -255,7 +300,7 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
                 <div className="p-4">
                   {items.map((item) => (
                     <div key={`${item.id}-${JSON.stringify(item.selectedCustomizations)}`} className="flex items-center justify-between py-3 border-b last:border-b-0">
-                      <div>
+                      <div className="flex-1">
                         <p className="font-medium text-gray-800">{item.name}</p>
                         {item.selectedCustomizations && item.selectedCustomizations.length > 0 && (
                           <p className="text-sm text-gray-500">
@@ -274,7 +319,7 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
                         >
                           <Minus className="w-4 h-4" />
                         </Button>
-                        <span className="font-medium text-gray-800">{item.quantity}</span>
+                        <span className="font-medium text-gray-800 min-w-[2rem] text-center">{item.quantity}</span>
                         <Button
                           variant="outline"
                           size="icon"
@@ -301,7 +346,7 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
         </div>
 
         {/* Footer */}
-        {!isProcessingOrder && !failedPaymentOrderId && !(currentOrder && orderStatus !== 'delivered' && orderStatus !== 'cancelled') && items.length > 0 && !showAddressForm && (
+        {!isProcessingOrder && !failedPaymentOrderId && !hasActiveOrder && items.length > 0 && !showAddressForm && (
           <div className="p-4 border-t sticky bottom-0 bg-white z-10">
             <div className="flex justify-between items-center mb-2">
               <p className="text-gray-700">Subtotal:</p>
@@ -309,11 +354,11 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
             </div>
             <div className="flex justify-between items-center mb-4">
               <p className="text-gray-700">Delivery Fee:</p>
-              <p className="font-bold text-gray-800">{formatCurrency(5)}</p>
+              <p className="font-bold text-gray-800">{formatCurrency(deliveryFee)}</p>
             </div>
             <div className="flex justify-between items-center text-lg font-bold text-gray-900 mb-4">
               <p>Total:</p>
-              <p>{formatCurrency(total + 5)}</p>
+              <p>{formatCurrency(totalWithDelivery)}</p>
             </div>
             <Button
               onClick={handleCheckout}
