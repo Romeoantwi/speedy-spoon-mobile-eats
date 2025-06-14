@@ -1,19 +1,27 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ChefHat, Clock, CheckCircle, Package, DollarSign, TrendingUp, Shield, AlertTriangle } from 'lucide-react';
+import { ChefHat, Clock, CheckCircle, Package, DollarSign, TrendingUp, Shield, AlertTriangle, MapPin, User, Phone, Truck } from 'lucide-react';
 import NotificationCenter from '@/components/NotificationCenter';
 import { useAuth } from '@/hooks/useAuth';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useRealTimeOrders } from '@/hooks/useRealTimeOrders';
 import { formatCurrency } from '@/utils/currency';
+import { supabase } from '@/integrations/supabase/client';
+
+interface OrderWithDetails extends Order {
+  customer_name?: string;
+  driver_name?: string;
+  driver_phone?: string;
+  driver_vehicle?: string;
+}
 
 const RestaurantDashboard = () => {
   const { user } = useAuth();
   const { isAdmin, adminRole, permissions, loading: adminLoading } = useAdminAuth();
   const { orders, loading: ordersLoading, updateOrderStatus } = useRealTimeOrders('restaurant');
+  const [enrichedOrders, setEnrichedOrders] = useState<OrderWithDetails[]>([]);
   const [stats, setStats] = useState({
     todayOrders: 0,
     todayRevenue: 0,
@@ -21,23 +29,92 @@ const RestaurantDashboard = () => {
     avgPrepTime: 25
   });
 
+  // Enrich orders with customer and driver details
   useEffect(() => {
-    if (orders.length > 0) {
+    const enrichOrdersWithDetails = async () => {
+      if (orders.length === 0) {
+        setEnrichedOrders([]);
+        return;
+      }
+
+      const enrichedData = await Promise.all(
+        orders.map(async (order) => {
+          const enrichedOrder: OrderWithDetails = { ...order };
+
+          // Get customer details
+          try {
+            const { data: customerProfile } = await supabase
+              .from('profiles')
+              .select('full_name')
+              .eq('id', order.customer_id)
+              .single();
+            
+            if (customerProfile) {
+              enrichedOrder.customer_name = customerProfile.full_name || 'N/A';
+            }
+          } catch (error) {
+            console.log('Customer profile not found for order:', order.id);
+            enrichedOrder.customer_name = 'N/A';
+          }
+
+          // Get driver details if assigned
+          if (order.driver_id) {
+            try {
+              const { data: driverProfile } = await supabase
+                .from('profiles')
+                .select('full_name, phone_number')
+                .eq('id', order.driver_id)
+                .single();
+
+              const { data: driverDetails } = await supabase
+                .from('driver_profiles')
+                .select('vehicle_type, vehicle_model, vehicle_plate_number')
+                .eq('user_id', order.driver_id)
+                .single();
+
+              if (driverProfile) {
+                enrichedOrder.driver_name = driverProfile.full_name || 'N/A';
+                enrichedOrder.driver_phone = driverProfile.phone_number || 'N/A';
+              }
+
+              if (driverDetails) {
+                enrichedOrder.driver_vehicle = `${driverDetails.vehicle_type} - ${driverDetails.vehicle_model || 'N/A'} (${driverDetails.vehicle_plate_number || 'N/A'})`;
+              }
+            } catch (error) {
+              console.log('Driver details not found for order:', order.id);
+              enrichedOrder.driver_name = 'N/A';
+              enrichedOrder.driver_phone = 'N/A';
+              enrichedOrder.driver_vehicle = 'N/A';
+            }
+          }
+
+          return enrichedOrder;
+        })
+      );
+
+      setEnrichedOrders(enrichedData);
+    };
+
+    enrichOrdersWithDetails();
+  }, [orders]);
+
+  useEffect(() => {
+    if (enrichedOrders.length > 0) {
       const today = new Date().toDateString();
-      const todayOrders = orders.filter(order => 
+      const todayOrders = enrichedOrders.filter(order => 
         new Date(order.created_at).toDateString() === today
       );
       
       setStats({
         todayOrders: todayOrders.length,
         todayRevenue: todayOrders.reduce((sum, order) => sum + Number(order.total_amount), 0),
-        pendingOrders: orders.filter(order => 
+        pendingOrders: enrichedOrders.filter(order => 
           ['placed', 'confirmed', 'preparing'].includes(order.status)
         ).length,
         avgPrepTime: 25
       });
     }
-  }, [orders]);
+  }, [enrichedOrders]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -197,16 +274,16 @@ const RestaurantDashboard = () => {
           <div className="lg:col-span-2">
             <Card>
               <CardHeader>
-                <CardTitle>Recent Orders ({orders.length})</CardTitle>
+                <CardTitle>Recent Orders ({enrichedOrders.length})</CardTitle>
               </CardHeader>
               <CardContent>
                 {ordersLoading ? (
                   <p className="text-center text-gray-500 py-8">Loading orders...</p>
-                ) : orders.length === 0 ? (
+                ) : enrichedOrders.length === 0 ? (
                   <p className="text-center text-gray-500 py-8">No orders yet today</p>
                 ) : (
                   <div className="space-y-4 max-h-96 overflow-y-auto">
-                    {orders.map((order) => (
+                    {enrichedOrders.map((order) => (
                       <div key={order.id} className="border rounded-lg p-4 hover:bg-gray-50">
                         <div className="flex justify-between items-start mb-3">
                           <div>
@@ -228,6 +305,49 @@ const RestaurantDashboard = () => {
                           </div>
                         </div>
                         
+                        {/* Customer Information */}
+                        <div className="mb-3 p-3 bg-blue-50 rounded-lg">
+                          <h4 className="font-medium mb-2 flex items-center">
+                            <User className="w-4 h-4 mr-2 text-blue-600" />
+                            Customer Details
+                          </h4>
+                          <div className="text-sm text-gray-700 space-y-1">
+                            <p><strong>Name:</strong> {order.customer_name || 'Loading...'}</p>
+                            {order.customer_phone && (
+                              <p className="flex items-center">
+                                <Phone className="w-3 h-3 mr-1" />
+                                <strong>Phone:</strong> {order.customer_phone}
+                              </p>
+                            )}
+                            <p className="flex items-start">
+                              <MapPin className="w-3 h-3 mr-1 mt-1 flex-shrink-0" />
+                              <span><strong>Address:</strong> {order.delivery_address}</span>
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Driver Information */}
+                        {order.driver_id ? (
+                          <div className="mb-3 p-3 bg-green-50 rounded-lg">
+                            <h4 className="font-medium mb-2 flex items-center">
+                              <Truck className="w-4 h-4 mr-2 text-green-600" />
+                              Driver Assigned
+                            </h4>
+                            <div className="text-sm text-gray-700 space-y-1">
+                              <p><strong>Name:</strong> {order.driver_name || 'Loading...'}</p>
+                              <p><strong>Phone:</strong> {order.driver_phone || 'Loading...'}</p>
+                              <p><strong>Vehicle:</strong> {order.driver_vehicle || 'Loading...'}</p>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="mb-3 p-3 bg-yellow-50 rounded-lg">
+                            <p className="text-sm text-yellow-800 flex items-center">
+                              <Truck className="w-4 h-4 mr-2" />
+                              No driver assigned yet
+                            </p>
+                          </div>
+                        )}
+                        
                         <div className="mb-3">
                           <p className="text-sm font-medium mb-1">Items:</p>
                           <div className="text-sm text-gray-600">
@@ -237,18 +357,11 @@ const RestaurantDashboard = () => {
                           </div>
                         </div>
                         
-                        <div className="text-sm text-gray-600 mb-3">
-                          <p><strong>Delivery:</strong> {order.delivery_address}</p>
-                          {order.customer_phone && (
-                            <p><strong>Phone:</strong> {order.customer_phone}</p>
-                          )}
-                          {order.special_instructions && (
-                            <p><strong>Instructions:</strong> {order.special_instructions}</p>
-                          )}
-                          {order.driver_id && (
-                            <p><strong>Driver:</strong> Assigned</p>
-                          )}
-                        </div>
+                        {order.special_instructions && (
+                          <div className="mb-3 p-2 bg-orange-50 rounded">
+                            <p className="text-sm"><strong>Special Instructions:</strong> {order.special_instructions}</p>
+                          </div>
+                        )}
                         
                         {getNextStatus(order.status) && order.payment_status === 'paid' && (
                           <Button 
