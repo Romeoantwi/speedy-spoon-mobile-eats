@@ -1,7 +1,9 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import { ChefHat, Clock, CheckCircle, Package, DollarSign, TrendingUp, Shield, AlertTriangle, MapPin, User, Phone, Truck } from 'lucide-react';
 import NotificationCenter from '@/components/NotificationCenter';
 import { useAuth } from '@/hooks/useAuth';
@@ -9,6 +11,7 @@ import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useRealTimeOrders } from '@/hooks/useRealTimeOrders';
 import { formatCurrency } from '@/utils/currency';
 import { supabase } from '@/integrations/supabase/client';
+import { Order } from '@/types/order';
 
 interface OrderWithDetails extends Order {
   customer_name?: string;
@@ -22,12 +25,46 @@ const RestaurantDashboard = () => {
   const { isAdmin, adminRole, permissions, loading: adminLoading } = useAdminAuth();
   const { orders, loading: ordersLoading, updateOrderStatus } = useRealTimeOrders('restaurant');
   const [enrichedOrders, setEnrichedOrders] = useState<OrderWithDetails[]>([]);
+  const [isRestaurantOpen, setIsRestaurantOpen] = useState(true);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
   const [stats, setStats] = useState({
     todayOrders: 0,
     todayRevenue: 0,
     pendingOrders: 0,
     avgPrepTime: 25
   });
+
+  // Load restaurant status on mount
+  useEffect(() => {
+    loadRestaurantStatus();
+  }, []);
+
+  const loadRestaurantStatus = async () => {
+    try {
+      const status = localStorage.getItem('restaurantOpen');
+      if (status !== null) {
+        setIsRestaurantOpen(status === 'true');
+      }
+    } catch (error) {
+      console.error('Error loading restaurant status:', error);
+    }
+  };
+
+  const toggleRestaurantStatus = async () => {
+    setUpdatingStatus(true);
+    try {
+      const newStatus = !isRestaurantOpen;
+      setIsRestaurantOpen(newStatus);
+      localStorage.setItem('restaurantOpen', newStatus.toString());
+      
+      // You could also store this in Supabase if needed for persistence across sessions
+      console.log(`Restaurant ${newStatus ? 'opened' : 'closed'}`);
+    } catch (error) {
+      console.error('Error updating restaurant status:', error);
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
 
   // Enrich orders with customer and driver details
   useEffect(() => {
@@ -220,13 +257,43 @@ const RestaurantDashboard = () => {
               <h1 className="text-3xl font-bold text-gray-800">SpeedySpoon Restaurant</h1>
               <p className="text-gray-600">Admin Dashboard - {adminRole}</p>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-4">
               <Shield className="w-6 h-6 text-green-600" />
               <Badge variant="default" className="bg-green-500">ADMIN ACCESS</Badge>
-              <ChefHat className="w-8 h-8 text-orange-600" />
-              <Badge variant="default" className="bg-green-500">OPEN</Badge>
+              
+              {/* Restaurant Status Toggle */}
+              <div className="flex items-center space-x-3 bg-white p-3 rounded-lg shadow-sm">
+                <ChefHat className="w-6 h-6 text-orange-600" />
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm font-medium">Restaurant:</span>
+                  <Badge 
+                    variant="default" 
+                    className={isRestaurantOpen ? 'bg-green-500' : 'bg-red-500'}
+                  >
+                    {isRestaurantOpen ? 'OPEN' : 'CLOSED'}
+                  </Badge>
+                  <Switch
+                    checked={isRestaurantOpen}
+                    onCheckedChange={toggleRestaurantStatus}
+                    disabled={updatingStatus}
+                  />
+                </div>
+              </div>
             </div>
           </div>
+          
+          {/* Status Alert */}
+          {!isRestaurantOpen && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+              <div className="flex items-center">
+                <AlertTriangle className="w-5 h-5 text-red-600 mr-3" />
+                <div>
+                  <h3 className="font-medium text-red-800">Restaurant is Currently Closed</h3>
+                  <p className="text-sm text-red-600">Customers cannot place new orders while the restaurant is closed.</p>
+                </div>
+              </div>
+            </div>
+          )}
           
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
