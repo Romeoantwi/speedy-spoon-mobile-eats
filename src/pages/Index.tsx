@@ -6,13 +6,11 @@ import { Link } from "react-router-dom";
 import { 
   ShoppingCart, 
   Truck, 
-  Users, 
   Clock, 
   MapPin, 
   CreditCard,
   Star,
   Zap,
-  Shield,
   Heart
 } from "lucide-react";
 
@@ -35,8 +33,8 @@ const Index = () => {
           </Badge>
         </div>
 
-        {/* Quick Access Cards */}
-        <div className="grid md:grid-cols-3 gap-8 mb-16">
+        {/* Quick Access Cards - Only Customer and Driver */}
+        <div className="grid md:grid-cols-2 gap-8 mb-16 max-w-4xl mx-auto">
           <Card className="group hover:scale-105 transition-all duration-300 bg-gradient-to-br from-gray-900 to-black border-red-600/30 hover:border-red-500 relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-red-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             <Link to="/customer" className="relative z-10">
@@ -72,24 +70,6 @@ const Index = () => {
               </CardContent>
             </Link>
           </Card>
-
-          <Card className="group hover:scale-105 transition-all duration-300 bg-gradient-to-br from-gray-900 to-black border-red-600/30 hover:border-red-500 relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-red-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <Link to="/admin-setup" className="relative z-10">
-              <CardHeader className="text-center">
-                <div className="mx-auto mb-4 w-20 h-20 bg-gradient-to-br from-red-800 to-red-900 rounded-full flex items-center justify-center group-hover:shadow-lg group-hover:shadow-red-800/50 transition-all duration-300">
-                  <Users className="w-10 h-10 text-white" />
-                </div>
-                <CardTitle className="text-red-400 text-xl">Restaurant Admin</CardTitle>
-                <CardDescription className="text-gray-400">Manage your restaurant empire</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button className="w-full bg-gradient-to-r from-red-800 to-red-900 hover:from-red-900 hover:to-black text-white font-semibold">
-                  Admin Dashboard
-                </Button>
-              </CardContent>
-            </Link>
-          </Card>
         </div>
 
         {/* Features Grid */}
@@ -120,7 +100,7 @@ const Index = () => {
         <Card className="bg-gradient-to-r from-red-600 via-red-700 to-red-800 text-white border-none shadow-2xl shadow-red-600/25">
           <CardHeader>
             <CardTitle className="text-3xl font-bold flex items-center">
-              <Shield className="w-8 h-8 mr-3" />
+              <Heart className="w-8 h-8 mr-3" />
               Quick Setup Guide
             </CardTitle>
             <CardDescription className="text-red-100 text-lg">
@@ -134,7 +114,7 @@ const Index = () => {
                   <span className="text-2xl font-bold">1</span>
                 </div>
                 <h4 className="font-bold mb-2 text-lg">Create Account</h4>
-                <p className="text-red-100">Sign up as customer, driver, or restaurant admin</p>
+                <p className="text-red-100">Sign up as customer or driver</p>
               </div>
               <div className="group">
                 <div className="bg-white/20 backdrop-blur rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
@@ -148,7 +128,7 @@ const Index = () => {
                   <Heart className="w-8 h-8" />
                 </div>
                 <h4 className="font-bold mb-2 text-lg">Start Enjoying</h4>
-                <p className="text-red-100">Order food, deliver, or manage your restaurant</p>
+                <p className="text-red-100">Order food or start delivering</p>
               </div>
             </div>
           </CardContent>
