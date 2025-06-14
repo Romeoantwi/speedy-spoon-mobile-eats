@@ -32,8 +32,8 @@ const menuData: MenuCategory[] = [
       },
       {
         id: 2,
-        name: "Assorted Fried Rice",
-        description: "Delicious fried rice with assorted meat and vegetables",
+        name: "Assorted Fried Rice with Chicken",
+        description: "Delicious fried rice with assorted chicken and vegetables",
         price: 35,
         image: "https://images.unsplash.com/photo-1603133872878-684f208fb84b?auto=format&fit=crop&w=500",
         category: "main-dishes",

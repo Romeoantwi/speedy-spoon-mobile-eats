@@ -1,8 +1,8 @@
 
 import { Order } from '@/types/order';
-import { UseToastReturn } from '@/hooks/use-toast';
+import { toast } from '@/hooks/use-toast';
 
-export const showStatusUpdateToast = (toast: UseToastReturn['toast'], status: Order['status']) => {
+export const showStatusUpdateToast = (toastFn: typeof toast, status: Order['status']) => {
   const statusMessages = {
     'placed': { title: "Order Placed", description: "Your order has been received" },
     'confirmed': { title: "Order Confirmed", description: "Restaurant is preparing your order" },
@@ -15,7 +15,7 @@ export const showStatusUpdateToast = (toast: UseToastReturn['toast'], status: Or
 
   const message = statusMessages[status];
   if (message) {
-    toast({
+    toastFn({
       title: message.title,
       description: message.description,
       variant: status === 'cancelled' ? 'destructive' : 'default',

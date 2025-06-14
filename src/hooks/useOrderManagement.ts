@@ -1,26 +1,29 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { CartItem } from '@/types/food';
-import { Order, OrderItem } from '@/types/order'; 
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from "@/hooks/use-toast";
-
+import { Order } from '@/types/order';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 import { showStatusUpdateToast } from './order-management/toast';
 import { loadActiveOrder } from './order-management/loadActiveOrder';
-import { createOrderFn } from './order-management/createOrder';
+import { createOrder } from './order-management/createOrder';
 import { setupOrderRealtime } from './order-management/realtime';
 
 export const useOrderManagement = () => {
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
   const [orderStatus, setOrderStatus] = useState<Order['status'] | null>(null);
   const [loadingOrder, setLoadingOrder] = useState(false);
-  const { toast } = useToast();
+
+  const showStatusToast = useCallback((status: Order['status']) => {
+    showStatusUpdateToast(toast, status);
+  }, [toast]);
 
   const clearCurrentOrderInternal = useCallback(() => {
     setCurrentOrder(null);
     setOrderStatus(null);
     localStorage.removeItem('activeOrderId');
-    console.log('Active order cleared');
+    console.log('Cleared current order');
   }, []);
 
   // Load active order on mount
@@ -28,47 +31,42 @@ export const useOrderManagement = () => {
     loadActiveOrder(setLoadingOrder, setCurrentOrder, setOrderStatus);
   }, []);
 
-  // Real-time order updates
+  // Set up real-time subscription when we have an order
   useEffect(() => {
-    if (!currentOrder?.id) return;
-    const cleanup = setupOrderRealtime(
-      currentOrder.id,
-      setCurrentOrder,
-      setOrderStatus,
-      (status) => showStatusUpdateToast(toast, status),
-      clearCurrentOrderInternal,
-    );
-    return cleanup;
-  }, [currentOrder?.id, clearCurrentOrderInternal, toast]);
-
-  const createOrder = useCallback(
-    async (cartItems: CartItem[], deliveryAddress: string): Promise<string | null> => {
-      return createOrderFn(
-        cartItems,
-        deliveryAddress,
-        toast,
+    if (currentOrder?.id) {
+      console.log('Setting up real-time subscription for order:', currentOrder.id);
+      return setupOrderRealtime(
+        currentOrder.id,
         setCurrentOrder,
         setOrderStatus,
-        setLoadingOrder
+        showStatusToast,
+        clearCurrentOrderInternal
       );
-    },
-    [toast]
-  );
-
-  const updateOrderStatus = useCallback((newStatus: Order['status']) => {
-    if (currentOrder) {
-      setCurrentOrder(prev => prev ? { ...prev, status: newStatus } : null);
-      setOrderStatus(newStatus);
-      console.log(`Order status updated locally: ${newStatus}`);
     }
-  }, [currentOrder]);
+  }, [currentOrder?.id, showStatusToast, clearCurrentOrderInternal]);
+
+  const placeOrder = async (orderData: any) => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to place an order",
+        variant: "destructive",
+      });
+      return null;
+    }
+
+    return createOrder(orderData, user, setCurrentOrder, setOrderStatus, toast);
+  };
+
+  const clearCurrentOrder = () => {
+    clearCurrentOrderInternal();
+  };
 
   return {
     currentOrder,
     orderStatus,
     loadingOrder,
-    createOrder,
-    updateOrderStatus,
-    clearCurrentOrder: clearCurrentOrderInternal,
+    placeOrder,
+    clearCurrentOrder,
   };
 };
