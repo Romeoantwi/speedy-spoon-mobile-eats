@@ -2,14 +2,14 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
-import { ChefHat, Clock, CheckCircle, Package, DollarSign, TrendingUp, Shield, AlertTriangle, MapPin, User, Phone, Truck } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import NotificationCenter from '@/components/NotificationCenter';
+import RestaurantHeader from '@/components/restaurant/RestaurantHeader';
+import StatsCards from '@/components/restaurant/StatsCards';
+import OrdersList from '@/components/restaurant/OrdersList';
 import { useAuth } from '@/hooks/useAuth';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useRealTimeOrders } from '@/hooks/useRealTimeOrders';
-import { formatCurrency } from '@/utils/currency';
 import { supabase } from '@/integrations/supabase/client';
 import { Order } from '@/types/order';
 
@@ -22,7 +22,7 @@ interface OrderWithDetails extends Order {
 
 const RestaurantDashboard = () => {
   const { user } = useAuth();
-  const { isAdmin, adminRole, permissions, loading: adminLoading } = useAdminAuth();
+  const { isAdmin, adminRole, loading: adminLoading } = useAdminAuth();
   const { orders, loading: ordersLoading, updateOrderStatus } = useRealTimeOrders('restaurant');
   const [enrichedOrders, setEnrichedOrders] = useState<OrderWithDetails[]>([]);
   const [isRestaurantOpen, setIsRestaurantOpen] = useState(true);
@@ -56,8 +56,6 @@ const RestaurantDashboard = () => {
       const newStatus = !isRestaurantOpen;
       setIsRestaurantOpen(newStatus);
       localStorage.setItem('restaurantOpen', newStatus.toString());
-      
-      // You could also store this in Supabase if needed for persistence across sessions
       console.log(`Restaurant ${newStatus ? 'opened' : 'closed'}`);
     } catch (error) {
       console.error('Error updating restaurant status:', error);
@@ -153,36 +151,6 @@ const RestaurantDashboard = () => {
     }
   }, [enrichedOrders]);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'placed': return 'bg-yellow-100 text-yellow-800';
-      case 'confirmed': return 'bg-blue-100 text-blue-800';
-      case 'preparing': return 'bg-orange-100 text-orange-800';
-      case 'ready': return 'bg-green-100 text-green-800';
-      case 'picked_up': return 'bg-purple-100 text-purple-800';
-      case 'delivered': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getNextStatus = (currentStatus: string) => {
-    switch (currentStatus) {
-      case 'placed': return 'confirmed';
-      case 'confirmed': return 'preparing';
-      case 'preparing': return 'ready';
-      default: return null;
-    }
-  };
-
-  const getNextStatusLabel = (currentStatus: string) => {
-    switch (currentStatus) {
-      case 'placed': return 'Confirm Order';
-      case 'confirmed': return 'Start Preparing';
-      case 'preparing': return 'Mark Ready';
-      default: return null;
-    }
-  };
-
   if (adminLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 flex items-center justify-center">
@@ -250,209 +218,24 @@ const RestaurantDashboard = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50">
       <div className="container mx-auto px-4 py-8">
-        {/* Restaurant Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-800">SpeedySpoon Restaurant</h1>
-              <p className="text-gray-600">Admin Dashboard - {adminRole}</p>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Shield className="w-6 h-6 text-green-600" />
-              <Badge variant="default" className="bg-green-500">ADMIN ACCESS</Badge>
-              
-              {/* Restaurant Status Toggle */}
-              <div className="flex items-center space-x-3 bg-white p-3 rounded-lg shadow-sm">
-                <ChefHat className="w-6 h-6 text-orange-600" />
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm font-medium">Restaurant:</span>
-                  <Badge 
-                    variant="default" 
-                    className={isRestaurantOpen ? 'bg-green-500' : 'bg-red-500'}
-                  >
-                    {isRestaurantOpen ? 'OPEN' : 'CLOSED'}
-                  </Badge>
-                  <Switch
-                    checked={isRestaurantOpen}
-                    onCheckedChange={toggleRestaurantStatus}
-                    disabled={updatingStatus}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          {/* Status Alert */}
-          {!isRestaurantOpen && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-              <div className="flex items-center">
-                <AlertTriangle className="w-5 h-5 text-red-600 mr-3" />
-                <div>
-                  <h3 className="font-medium text-red-800">Restaurant is Currently Closed</h3>
-                  <p className="text-sm text-red-600">Customers cannot place new orders while the restaurant is closed.</p>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <Card>
-              <CardContent className="flex items-center p-4">
-                <Package className="w-8 h-8 text-blue-600 mr-3" />
-                <div>
-                  <p className="text-sm text-gray-600">Today's Orders</p>
-                  <p className="text-2xl font-bold">{stats.todayOrders}</p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="flex items-center p-4">
-                <DollarSign className="w-8 h-8 text-green-600 mr-3" />
-                <div>
-                  <p className="text-sm text-gray-600">Today's Revenue</p>
-                  <p className="text-2xl font-bold text-green-600">{formatCurrency(stats.todayRevenue)}</p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="flex items-center p-4">
-                <Clock className="w-8 h-8 text-orange-600 mr-3" />
-                <div>
-                  <p className="text-sm text-gray-600">Pending Orders</p>
-                  <p className="text-2xl font-bold text-orange-600">{stats.pendingOrders}</p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="flex items-center p-4">
-                <TrendingUp className="w-8 h-8 text-purple-600 mr-3" />
-                <div>
-                  <p className="text-sm text-gray-600">Avg Prep Time</p>
-                  <p className="text-2xl font-bold">{stats.avgPrepTime}m</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+        <RestaurantHeader
+          adminRole={adminRole || 'admin'}
+          isRestaurantOpen={isRestaurantOpen}
+          onToggleStatus={toggleRestaurantStatus}
+          updatingStatus={updatingStatus}
+        />
+        
+        <StatsCards stats={stats} />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Orders List */}
           <div className="lg:col-span-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Orders ({enrichedOrders.length})</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {ordersLoading ? (
-                  <p className="text-center text-gray-500 py-8">Loading orders...</p>
-                ) : enrichedOrders.length === 0 ? (
-                  <p className="text-center text-gray-500 py-8">No orders yet today</p>
-                ) : (
-                  <div className="space-y-4 max-h-96 overflow-y-auto">
-                    {enrichedOrders.map((order) => (
-                      <div key={order.id} className="border rounded-lg p-4 hover:bg-gray-50">
-                        <div className="flex justify-between items-start mb-3">
-                          <div>
-                            <h3 className="font-semibold">Order #{order.id.slice(-8)}</h3>
-                            <p className="text-sm text-gray-600">
-                              {new Date(order.created_at).toLocaleTimeString()}
-                            </p>
-                            {order.payment_status && (
-                              <Badge className={order.payment_status === 'paid' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>
-                                {order.payment_status}
-                              </Badge>
-                            )}
-                          </div>
-                          <div className="text-right">
-                            <Badge className={getStatusColor(order.status)}>
-                              {order.status.replace('_', ' ')}
-                            </Badge>
-                            <p className="font-bold text-lg mt-1">{formatCurrency(order.total_amount)}</p>
-                          </div>
-                        </div>
-                        
-                        {/* Customer Information */}
-                        <div className="mb-3 p-3 bg-blue-50 rounded-lg">
-                          <h4 className="font-medium mb-2 flex items-center">
-                            <User className="w-4 h-4 mr-2 text-blue-600" />
-                            Customer Details
-                          </h4>
-                          <div className="text-sm text-gray-700 space-y-1">
-                            <p><strong>Name:</strong> {order.customer_name || 'Loading...'}</p>
-                            {order.customer_phone && (
-                              <p className="flex items-center">
-                                <Phone className="w-3 h-3 mr-1" />
-                                <strong>Phone:</strong> {order.customer_phone}
-                              </p>
-                            )}
-                            <p className="flex items-start">
-                              <MapPin className="w-3 h-3 mr-1 mt-1 flex-shrink-0" />
-                              <span><strong>Address:</strong> {order.delivery_address}</span>
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Driver Information */}
-                        {order.driver_id ? (
-                          <div className="mb-3 p-3 bg-green-50 rounded-lg">
-                            <h4 className="font-medium mb-2 flex items-center">
-                              <Truck className="w-4 h-4 mr-2 text-green-600" />
-                              Driver Assigned
-                            </h4>
-                            <div className="text-sm text-gray-700 space-y-1">
-                              <p><strong>Name:</strong> {order.driver_name || 'Loading...'}</p>
-                              <p><strong>Phone:</strong> {order.driver_phone || 'Loading...'}</p>
-                              <p><strong>Vehicle:</strong> {order.driver_vehicle || 'Loading...'}</p>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="mb-3 p-3 bg-yellow-50 rounded-lg">
-                            <p className="text-sm text-yellow-800 flex items-center">
-                              <Truck className="w-4 h-4 mr-2" />
-                              No driver assigned yet
-                            </p>
-                          </div>
-                        )}
-                        
-                        <div className="mb-3">
-                          <p className="text-sm font-medium mb-1">Items:</p>
-                          <div className="text-sm text-gray-600">
-                            {order.items.map((item: any, index: number) => (
-                              <div key={index}>• {item.name} x{item.quantity}</div>
-                            ))}
-                          </div>
-                        </div>
-                        
-                        {order.special_instructions && (
-                          <div className="mb-3 p-2 bg-orange-50 rounded">
-                            <p className="text-sm"><strong>Special Instructions:</strong> {order.special_instructions}</p>
-                          </div>
-                        )}
-                        
-                        {getNextStatus(order.status) && order.payment_status === 'paid' && (
-                          <Button 
-                            onClick={() => updateOrderStatus(order.id, getNextStatus(order.status)!)}
-                            className="w-full bg-orange-500 hover:bg-orange-600"
-                          >
-                            {getNextStatusLabel(order.status)}
-                          </Button>
-                        )}
-                        
-                        {order.payment_status !== 'paid' && (
-                          <div className="bg-yellow-50 border border-yellow-200 rounded p-2 text-sm text-yellow-800">
-                            ⏳ Waiting for payment confirmation
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <OrdersList
+              orders={enrichedOrders}
+              loading={ordersLoading}
+              onUpdateStatus={updateOrderStatus}
+            />
           </div>
 
-          {/* Notifications */}
           <div>
             <NotificationCenter userType="restaurant" />
           </div>
