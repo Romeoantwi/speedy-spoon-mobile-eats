@@ -14,6 +14,7 @@ import NotFound from "./pages/NotFound";
 import DriverSignup from "./components/DriverSignup";
 import AdminLogin from "./pages/AdminLogin";
 import AdminSetup from "./components/AdminSetup";
+import InstallPrompt from "./components/InstallPrompt";
 import { AdminProvider } from "@/hooks/useAdminAuth";
 
 const queryClient = new QueryClient({
@@ -45,6 +46,7 @@ const App = () => {
                 <Route path="/restaurant-admin" element={<AdminLogin />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
+              <InstallPrompt />
             </BrowserRouter>
           </TooltipProvider>
         </AdminProvider>
