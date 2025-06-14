@@ -27,7 +27,7 @@ const Index = () => {
             SpeedySpoon 🔥
           </h1>
           <p className="text-xl md:text-2xl text-gray-300 mb-6 max-w-3xl mx-auto">
-            Ghana's Most Advanced Food Delivery Platform
+            Premium Food Delivery Platform
           </p>
           <Badge variant="secondary" className="text-lg px-6 py-3 bg-red-600/20 text-red-400 border-red-600/30">
             <Zap className="w-5 h-5 mr-2" />
@@ -101,13 +101,13 @@ const Index = () => {
           </div>
           <div className="text-center p-6 rounded-lg bg-gradient-to-br from-gray-900/50 to-black/50 border border-red-600/20 hover:border-red-500/40 transition-colors duration-300">
             <MapPin className="w-12 h-12 text-red-500 mx-auto mb-4" />
-            <h3 className="font-bold text-white text-lg mb-2">Ghana Locations</h3>
-            <p className="text-gray-400">Accra, Kumasi, Tamale & expanding</p>
+            <h3 className="font-bold text-white text-lg mb-2">Global Delivery</h3>
+            <p className="text-gray-400">Available in major cities worldwide</p>
           </div>
           <div className="text-center p-6 rounded-lg bg-gradient-to-br from-gray-900/50 to-black/50 border border-red-600/20 hover:border-red-500/40 transition-colors duration-300">
             <CreditCard className="w-12 h-12 text-red-500 mx-auto mb-4" />
-            <h3 className="font-bold text-white text-lg mb-2">Mobile Money</h3>
-            <p className="text-gray-400">MTN, AirtelTigo, Telecel supported</p>
+            <h3 className="font-bold text-white text-lg mb-2">Secure Payments</h3>
+            <p className="text-gray-400">Multiple payment methods supported</p>
           </div>
           <div className="text-center p-6 rounded-lg bg-gradient-to-br from-gray-900/50 to-black/50 border border-red-600/20 hover:border-red-500/40 transition-colors duration-300">
             <Star className="w-12 h-12 text-red-500 mx-auto mb-4" />
