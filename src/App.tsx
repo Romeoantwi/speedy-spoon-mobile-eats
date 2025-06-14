@@ -13,6 +13,7 @@ import RestaurantDashboard from "./pages/RestaurantDashboard";
 import NotFound from "./pages/NotFound";
 import DriverSignup from "./components/DriverSignup";
 import AdminLogin from "./pages/AdminLogin";
+import AdminSetup from "./components/AdminSetup";
 import { AdminProvider } from "@/hooks/useAdminAuth";
 
 const queryClient = new QueryClient({
@@ -39,6 +40,7 @@ const App = () => {
                 <Route path="/driver-dashboard" element={<DriverDashboard />} />
                 <Route path="/restaurant-dashboard" element={<RestaurantDashboard />} />
                 <Route path="/driver-signup" element={<DriverSignup />} />
+                <Route path="/admin-setup" element={<AdminSetup />} />
                 {/* Hidden admin route - not linked anywhere publicly */}
                 <Route path="/restaurant-admin" element={<AdminLogin />} />
                 <Route path="*" element={<NotFound />} />
