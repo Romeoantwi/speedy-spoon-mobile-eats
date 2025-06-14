@@ -24,7 +24,7 @@ interface CartProps {
 const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: CartProps) => {
   const { toast } = useToast();
   const { user } = useAuth();
-  const { currentOrder, orderStatus, createOrder, clearCurrentOrder, loadingOrder } = useOrderManagement();
+  const { currentOrder, orderStatus, placeOrder, clearCurrentOrder, loadingOrder } = useOrderManagement();
   const { makePayment, loading: paymentLoading, error: paystackError } = usePaystack();
 
   const [showAddressForm, setShowAddressForm] = useState(false);
@@ -139,7 +139,7 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
         return;
       }
 
-      const orderId = await createOrder(items, address);
+      const orderId = await placeOrder({ items, address });
 
       if (!orderId) {
         throw new Error("Failed to create order. Please try again.");

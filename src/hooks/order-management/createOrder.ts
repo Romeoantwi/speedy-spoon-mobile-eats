@@ -3,26 +3,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { CartItem } from '@/types/food';
 import { Order, OrderItem } from '@/types/order';
 
-export const createOrderFn = async (
+export const createOrder = async (
   cartItems: CartItem[],
   deliveryAddress: string,
-  toast: any, // UseToastReturn['toast']
+  user: any,
   setCurrentOrder: (order: Order) => void,
   setOrderStatus: (status: Order['status']) => void,
-  setLoadingOrder: (v: boolean) => void
+  toast: any
 ): Promise<string | null> => {
-  setLoadingOrder(true);
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      toast({
-        title: "Authentication Required",
-        description: "Please log in to place an order.",
-        variant: "destructive",
-      });
-      return null;
-    }
-
     if (!cartItems || cartItems.length === 0) {
       throw new Error('Cart is empty');
     }
@@ -80,7 +69,9 @@ export const createOrderFn = async (
 
     const newOrder: Order = {
       ...orderData,
-      items: orderData.items as unknown as OrderItem[],
+      items: (typeof orderData.items === 'string' 
+        ? JSON.parse(orderData.items) 
+        : orderData.items) as unknown as OrderItem[],
       status: orderData.status as Order['status'],
       payment_status: orderData.payment_status as Order['payment_status'],
     };
@@ -105,7 +96,5 @@ export const createOrderFn = async (
       variant: "destructive",
     });
     return null;
-  } finally {
-    setLoadingOrder(false);
   }
 };
