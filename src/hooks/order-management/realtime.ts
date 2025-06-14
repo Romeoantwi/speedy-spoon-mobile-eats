@@ -14,8 +14,11 @@ export const setupOrderRealtime = (
 ) => {
   if (!orderId) return;
 
+  // Create a unique channel name to avoid conflicts
+  const channelName = `order_updates_${orderId}_${Date.now()}`;
+
   const channel = supabase
-    .channel(`order_updates_${orderId}`)
+    .channel(channelName)
     .on(
       'postgres_changes',
       {

@@ -11,8 +11,53 @@ export const useRealTimeOrders = (userType: 'restaurant' | 'driver' | 'customer'
 
   useEffect(() => {
     fetchOrders();
-    setupRealtimeSubscription();
-  }, [userType]);
+    
+    // Create a unique channel name to avoid conflicts
+    const channelName = `orders-realtime-${userType}-${Date.now()}`;
+    
+    const subscription = supabase
+      .channel(channelName)
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'orders' },
+        (payload) => {
+          console.log('📱 Real-time order update:', payload);
+          
+          if (payload.eventType === 'INSERT') {
+            const newOrder = {
+              ...payload.new,
+              items: typeof payload.new.items === 'string' ? JSON.parse(payload.new.items) : payload.new.items,
+              status: payload.new.status as Order['status']
+            } as Order;
+            
+            setOrders(prev => [newOrder, ...prev]);
+            
+            if (userType === 'restaurant') {
+              toast({
+                title: "New Order Received! 🍽️",
+                description: `Order #${newOrder.id.slice(-8)} - GH₵${newOrder.total_amount}`,
+              });
+            }
+          } else if (payload.eventType === 'UPDATE') {
+            const updatedOrder = {
+              ...payload.new,
+              items: typeof payload.new.items === 'string' ? JSON.parse(payload.new.items) : payload.new.items,
+              status: payload.new.status as Order['status']
+            } as Order;
+            
+            setOrders(prev => prev.map(order => 
+              order.id === updatedOrder.id ? updatedOrder : order
+            ));
+          }
+        }
+      )
+      .subscribe();
+
+    // Cleanup function to properly unsubscribe
+    return () => {
+      console.log('Cleaning up real-time subscription for:', channelName);
+      supabase.removeChannel(subscription);
+    };
+  }, [userType, toast]);
 
   const fetchOrders = async () => {
     try {
@@ -49,49 +94,6 @@ export const useRealTimeOrders = (userType: 'restaurant' | 'driver' | 'customer'
     } finally {
       setLoading(false);
     }
-  };
-
-  const setupRealtimeSubscription = () => {
-    const subscription = supabase
-      .channel('orders-realtime')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'orders' },
-        (payload) => {
-          console.log('📱 Real-time order update:', payload);
-          
-          if (payload.eventType === 'INSERT') {
-            const newOrder = {
-              ...payload.new,
-              items: typeof payload.new.items === 'string' ? JSON.parse(payload.new.items) : payload.new.items,
-              status: payload.new.status as Order['status']
-            } as Order;
-            
-            setOrders(prev => [newOrder, ...prev]);
-            
-            if (userType === 'restaurant') {
-              toast({
-                title: "New Order Received! 🍽️",
-                description: `Order #${newOrder.id.slice(-8)} - GH₵${newOrder.total_amount}`,
-              });
-            }
-          } else if (payload.eventType === 'UPDATE') {
-            const updatedOrder = {
-              ...payload.new,
-              items: typeof payload.new.items === 'string' ? JSON.parse(payload.new.items) : payload.new.items,
-              status: payload.new.status as Order['status']
-            } as Order;
-            
-            setOrders(prev => prev.map(order => 
-              order.id === updatedOrder.id ? updatedOrder : order
-            ));
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      subscription.unsubscribe();
-    };
   };
 
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
