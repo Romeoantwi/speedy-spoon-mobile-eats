@@ -45,7 +45,7 @@ export const useOrderManagement = () => {
     }
   }, [currentOrder?.id, showStatusToast, clearCurrentOrderInternal]);
 
-  const placeOrder = async (orderData: any) => {
+  const placeOrder = async (orderData: { items: any[], address: string }) => {
     if (!user) {
       toast({
         title: "Authentication Required",
@@ -55,7 +55,19 @@ export const useOrderManagement = () => {
       return null;
     }
 
-    return createOrder(orderData, user, setCurrentOrder, setOrderStatus, toast);
+    setLoadingOrder(true);
+    try {
+      return await createOrder(
+        orderData.items,
+        orderData.address,
+        user,
+        setCurrentOrder,
+        setOrderStatus,
+        toast
+      );
+    } finally {
+      setLoadingOrder(false);
+    }
   };
 
   const clearCurrentOrder = () => {
