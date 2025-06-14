@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { CartItem } from '@/types/food';
 import { Order, OrderItem } from '@/types/order'; 
@@ -96,7 +95,7 @@ export const useOrderManagement = () => {
 
         const loadedOrder: Order = {
           ...orderData,
-          items: parsedItems as OrderItem[],
+          items: parsedItems as unknown as OrderItem[],
           status: orderData.status as Order['status'],
           payment_status: orderData.payment_status as Order['payment_status'],
         };
@@ -213,7 +212,7 @@ export const useOrderManagement = () => {
 
       const newOrder: Order = {
         ...orderData,
-        items: orderData.items as OrderItem[], // Cast from JSON to OrderItem[]
+        items: orderData.items as unknown as OrderItem[], // Cast from JSON to OrderItem[]
         status: orderData.status as Order['status'],
         payment_status: orderData.payment_status as Order['payment_status'],
       };
