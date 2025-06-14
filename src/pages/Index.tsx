@@ -9,73 +9,82 @@ import {
   Users, 
   Clock, 
   MapPin, 
-  CreditCard
+  CreditCard,
+  Star,
+  Zap,
+  Shield,
+  Heart
 } from "lucide-react";
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50">
+    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-red-950">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-5xl font-bold text-gray-900 mb-4">
-            SpeedySpoon 🍽️
+        <div className="text-center mb-12 relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-red-600/20 to-transparent blur-3xl -z-10"></div>
+          <h1 className="text-6xl md:text-8xl font-bold mb-4 gradient-text">
+            SpeedySpoon 🔥
           </h1>
-          <p className="text-xl text-gray-600 mb-6">
-            Ghana's Premier Food Delivery Platform
+          <p className="text-xl md:text-2xl text-gray-300 mb-6 max-w-3xl mx-auto">
+            Ghana's Most Advanced Food Delivery Platform
           </p>
-          <Badge variant="secondary" className="text-lg px-4 py-2">
-            Multi-User Restaurant Management System
+          <Badge variant="secondary" className="text-lg px-6 py-3 bg-red-600/20 text-red-400 border-red-600/30">
+            <Zap className="w-5 h-5 mr-2" />
+            Next-Gen Multi-User System
           </Badge>
         </div>
 
         {/* Quick Access Cards */}
-        <div className="grid md:grid-cols-3 gap-6 mb-12">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-            <Link to="/customer">
+        <div className="grid md:grid-cols-3 gap-8 mb-16">
+          <Card className="group hover:scale-105 transition-all duration-300 bg-gradient-to-br from-gray-900 to-black border-red-600/30 hover:border-red-500 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-red-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <Link to="/customer" className="relative z-10">
               <CardHeader className="text-center">
-                <div className="mx-auto mb-4 w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center">
-                  <ShoppingCart className="w-8 h-8 text-orange-600" />
+                <div className="mx-auto mb-4 w-20 h-20 bg-gradient-to-br from-red-600 to-red-700 rounded-full flex items-center justify-center group-hover:shadow-lg group-hover:shadow-red-600/50 transition-all duration-300">
+                  <ShoppingCart className="w-10 h-10 text-white" />
                 </div>
-                <CardTitle className="text-orange-600">Order Food</CardTitle>
-                <CardDescription>Browse menu & place orders</CardDescription>
+                <CardTitle className="text-red-400 text-xl">Order Food</CardTitle>
+                <CardDescription className="text-gray-400">Browse premium menu & place orders instantly</CardDescription>
               </CardHeader>
               <CardContent>
-                <Button className="w-full bg-orange-600 hover:bg-orange-700">
+                <Button className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold">
                   Start Ordering
                 </Button>
               </CardContent>
             </Link>
           </Card>
 
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-            <Link to="/driver-signup">
+          <Card className="group hover:scale-105 transition-all duration-300 bg-gradient-to-br from-gray-900 to-black border-red-600/30 hover:border-red-500 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-red-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <Link to="/driver-signup" className="relative z-10">
               <CardHeader className="text-center">
-                <div className="mx-auto mb-4 w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
-                  <Truck className="w-8 h-8 text-blue-600" />
+                <div className="mx-auto mb-4 w-20 h-20 bg-gradient-to-br from-gray-700 to-gray-800 rounded-full flex items-center justify-center group-hover:shadow-lg group-hover:shadow-gray-600/50 transition-all duration-300">
+                  <Truck className="w-10 h-10 text-red-400" />
                 </div>
-                <CardTitle className="text-blue-600">Become a Driver</CardTitle>
-                <CardDescription>Join our delivery team</CardDescription>
+                <CardTitle className="text-red-400 text-xl">Become a Driver</CardTitle>
+                <CardDescription className="text-gray-400">Join our elite delivery team</CardDescription>
               </CardHeader>
               <CardContent>
-                <Button className="w-full bg-blue-600 hover:bg-blue-700">
-                  Sign Up as Driver
+                <Button className="w-full bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-800 hover:to-gray-900 text-white font-semibold">
+                  Join as Driver
                 </Button>
               </CardContent>
             </Link>
           </Card>
 
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-            <Link to="/admin-setup">
+          <Card className="group hover:scale-105 transition-all duration-300 bg-gradient-to-br from-gray-900 to-black border-red-600/30 hover:border-red-500 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-red-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <Link to="/admin-setup" className="relative z-10">
               <CardHeader className="text-center">
-                <div className="mx-auto mb-4 w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-                  <Users className="w-8 h-8 text-green-600" />
+                <div className="mx-auto mb-4 w-20 h-20 bg-gradient-to-br from-red-800 to-red-900 rounded-full flex items-center justify-center group-hover:shadow-lg group-hover:shadow-red-800/50 transition-all duration-300">
+                  <Users className="w-10 h-10 text-white" />
                 </div>
-                <CardTitle className="text-green-600">Restaurant Admin</CardTitle>
-                <CardDescription>Manage your restaurant</CardDescription>
+                <CardTitle className="text-red-400 text-xl">Restaurant Admin</CardTitle>
+                <CardDescription className="text-gray-400">Manage your restaurant empire</CardDescription>
               </CardHeader>
               <CardContent>
-                <Button className="w-full bg-green-600 hover:bg-green-700">
+                <Button className="w-full bg-gradient-to-r from-red-800 to-red-900 hover:from-red-900 hover:to-black text-white font-semibold">
                   Admin Dashboard
                 </Button>
               </CardContent>
@@ -84,59 +93,62 @@ const Index = () => {
         </div>
 
         {/* Features Grid */}
-        <div className="grid md:grid-cols-4 gap-4 mb-12">
-          <div className="text-center p-4">
-            <Clock className="w-8 h-8 text-orange-500 mx-auto mb-2" />
-            <h3 className="font-semibold">Real-time Tracking</h3>
-            <p className="text-sm text-gray-600">Live order updates</p>
+        <div className="grid md:grid-cols-4 gap-6 mb-16">
+          <div className="text-center p-6 rounded-lg bg-gradient-to-br from-gray-900/50 to-black/50 border border-red-600/20 hover:border-red-500/40 transition-colors duration-300">
+            <Clock className="w-12 h-12 text-red-500 mx-auto mb-4" />
+            <h3 className="font-bold text-white text-lg mb-2">Real-time Tracking</h3>
+            <p className="text-gray-400">Live order updates with GPS tracking</p>
           </div>
-          <div className="text-center p-4">
-            <MapPin className="w-8 h-8 text-orange-500 mx-auto mb-2" />
-            <h3 className="font-semibold">Ghana Locations</h3>
-            <p className="text-sm text-gray-600">Accra, Kumasi & more</p>
+          <div className="text-center p-6 rounded-lg bg-gradient-to-br from-gray-900/50 to-black/50 border border-red-600/20 hover:border-red-500/40 transition-colors duration-300">
+            <MapPin className="w-12 h-12 text-red-500 mx-auto mb-4" />
+            <h3 className="font-bold text-white text-lg mb-2">Ghana Locations</h3>
+            <p className="text-gray-400">Accra, Kumasi, Tamale & expanding</p>
           </div>
-          <div className="text-center p-4">
-            <CreditCard className="w-8 h-8 text-orange-500 mx-auto mb-2" />
-            <h3 className="font-semibold">Mobile Money</h3>
-            <p className="text-sm text-gray-600">MTN, AirtelTigo, Telecel</p>
+          <div className="text-center p-6 rounded-lg bg-gradient-to-br from-gray-900/50 to-black/50 border border-red-600/20 hover:border-red-500/40 transition-colors duration-300">
+            <CreditCard className="w-12 h-12 text-red-500 mx-auto mb-4" />
+            <h3 className="font-bold text-white text-lg mb-2">Mobile Money</h3>
+            <p className="text-gray-400">MTN, AirtelTigo, Telecel supported</p>
           </div>
-          <div className="text-center p-4">
-            <ShoppingCart className="w-8 h-8 text-orange-500 mx-auto mb-2" />
-            <h3 className="font-semibold">Easy Ordering</h3>
-            <p className="text-sm text-gray-600">Simple & fast</p>
+          <div className="text-center p-6 rounded-lg bg-gradient-to-br from-gray-900/50 to-black/50 border border-red-600/20 hover:border-red-500/40 transition-colors duration-300">
+            <Star className="w-12 h-12 text-red-500 mx-auto mb-4" />
+            <h3 className="font-bold text-white text-lg mb-2">Premium Service</h3>
+            <p className="text-gray-400">5-star rated delivery experience</p>
           </div>
         </div>
 
         {/* Quick Setup Guide */}
-        <Card className="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+        <Card className="bg-gradient-to-r from-red-600 via-red-700 to-red-800 text-white border-none shadow-2xl shadow-red-600/25">
           <CardHeader>
-            <CardTitle className="text-2xl">Quick Setup Guide</CardTitle>
-            <CardDescription className="text-orange-100">
-              Get started in 3 simple steps
+            <CardTitle className="text-3xl font-bold flex items-center">
+              <Shield className="w-8 h-8 mr-3" />
+              Quick Setup Guide
+            </CardTitle>
+            <CardDescription className="text-red-100 text-lg">
+              Get started in 3 simple steps and join thousands of satisfied customers
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid md:grid-cols-3 gap-6 text-center">
-              <div>
-                <div className="bg-white/20 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-2">
-                  <span className="text-xl font-bold">1</span>
+            <div className="grid md:grid-cols-3 gap-8 text-center">
+              <div className="group">
+                <div className="bg-white/20 backdrop-blur rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+                  <span className="text-2xl font-bold">1</span>
                 </div>
-                <h4 className="font-semibold mb-1">Create Account</h4>
-                <p className="text-sm text-orange-100">Sign up as customer, driver, or admin</p>
+                <h4 className="font-bold mb-2 text-lg">Create Account</h4>
+                <p className="text-red-100">Sign up as customer, driver, or restaurant admin</p>
               </div>
-              <div>
-                <div className="bg-white/20 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-2">
-                  <span className="text-xl font-bold">2</span>
+              <div className="group">
+                <div className="bg-white/20 backdrop-blur rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+                  <span className="text-2xl font-bold">2</span>
                 </div>
-                <h4 className="font-semibold mb-1">Set Up Role</h4>
-                <p className="text-sm text-orange-100">Complete your profile and verification</p>
+                <h4 className="font-bold mb-2 text-lg">Complete Profile</h4>
+                <p className="text-red-100">Verify your identity and set preferences</p>
               </div>
-              <div>
-                <div className="bg-white/20 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-2">
-                  <span className="text-xl font-bold">3</span>
+              <div className="group">
+                <div className="bg-white/20 backdrop-blur rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+                  <Heart className="w-8 h-8" />
                 </div>
-                <h4 className="font-semibold mb-1">Start Using</h4>
-                <p className="text-sm text-orange-100">Order food, deliver, or manage restaurant</p>
+                <h4 className="font-bold mb-2 text-lg">Start Enjoying</h4>
+                <p className="text-red-100">Order food, deliver, or manage your restaurant</p>
               </div>
             </div>
           </CardContent>

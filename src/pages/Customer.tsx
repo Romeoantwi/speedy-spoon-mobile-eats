@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import Header from "@/components/Header";
 import MenuSection from "@/components/MenuSection";
@@ -7,7 +8,7 @@ import { CartItem, FoodItem, CustomizationOption } from "@/types/food";
 import { formatCurrencyShort } from "@/utils/currency";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { User, ShoppingCart } from "lucide-react";
+import { User, ShoppingCart, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const Customer = () => {
@@ -18,8 +19,7 @@ const Customer = () => {
 
   const addToCart = (item: FoodItem, selectedCustomizations: CustomizationOption[] = [], quantity: number = 1) => {
     const customizationPrice = selectedCustomizations.reduce((total, c) => total + c.price, 0);
-    const deliveryFee = 5; // GH₵ 5.00 delivery fee
-    const totalPrice = (item.price + customizationPrice + deliveryFee) * quantity;
+    const totalPrice = (item.price + customizationPrice) * quantity;
 
     setCartItems(prev => {
       const existingItemIndex = prev.findIndex(cartItem => 
@@ -58,8 +58,7 @@ const Customer = () => {
         prev.map(item => {
           if (item.id === id && JSON.stringify(item.selectedCustomizations) === JSON.stringify(selectedCustomizations)) {
             const customizationPrice = item.selectedCustomizations?.reduce((total, c) => total + c.price, 0) || 0;
-            const deliveryFee = 5; // GH₵ 5.00 delivery fee
-            const unitPrice = item.price + customizationPrice + deliveryFee;
+            const unitPrice = item.price + customizationPrice;
             return { 
               ...item, 
               quantity,
@@ -86,12 +85,12 @@ const Customer = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-red-950 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center mx-auto mb-4">
-            <span className="text-white font-bold text-lg">S</span>
+          <div className="w-16 h-16 bg-gradient-to-r from-red-600 to-red-700 rounded-lg flex items-center justify-center mx-auto mb-4 animate-pulse">
+            <span className="text-white font-bold text-2xl">S</span>
           </div>
-          <p className="text-gray-600">Loading...</p>
+          <p className="text-gray-300 text-lg">Loading your culinary experience...</p>
         </div>
       </div>
     );
@@ -99,7 +98,7 @@ const Customer = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50">
+      <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-red-950">
         <Header 
           cartItemCount={0}
           onCartClick={() => {}}
@@ -107,36 +106,39 @@ const Customer = () => {
         />
         
         <main className="container mx-auto px-4 py-8">
-          <div className="text-center mb-12">
-            <h1 className="text-4xl md:text-6xl font-bold text-gray-800 mb-4">
-              Welcome to <span className="text-orange-600">SpeedySpoon</span>
+          <div className="text-center mb-12 relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-red-600/20 to-transparent blur-3xl -z-10"></div>
+            <h1 className="text-5xl md:text-7xl font-bold text-white mb-4">
+              Welcome to <span className="gradient-text">SpeedySpoon</span>
             </h1>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-6">
-              Fast, fresh, and delicious Ghanaian food delivered right to your doorstep
+            <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-8">
+              Experience the finest Ghanaian cuisine delivered to your doorstep with lightning speed
             </p>
           </div>
 
           <div className="max-w-md mx-auto">
-            <Card>
+            <Card className="bg-gradient-to-br from-gray-900 to-black border-red-600/30 shadow-2xl">
               <CardHeader className="text-center">
-                <div className="mx-auto mb-4 w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center">
-                  <User className="w-8 h-8 text-orange-600" />
+                <div className="mx-auto mb-4 w-20 h-20 bg-gradient-to-br from-red-600 to-red-700 rounded-full flex items-center justify-center shadow-lg shadow-red-600/50">
+                  <User className="w-10 h-10 text-white" />
                 </div>
-                <CardTitle className="text-orange-600">Sign In Required</CardTitle>
+                <CardTitle className="text-red-400 text-2xl">Sign In Required</CardTitle>
               </CardHeader>
-              <CardContent className="text-center space-y-4">
-                <p className="text-gray-600">
-                  Please sign in to your account to browse our menu and place orders.
+              <CardContent className="text-center space-y-6">
+                <p className="text-gray-300 text-lg">
+                  Please sign in to your account to browse our premium menu and place orders.
                 </p>
                 <Button 
                   onClick={() => setShowAuthModal(true)}
-                  className="w-full bg-orange-600 hover:bg-orange-700"
+                  className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold py-3 text-lg"
                 >
+                  <Zap className="w-5 h-5 mr-2" />
                   Sign In to Continue
                 </Button>
-                <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4">
-                  <p className="text-gray-700 text-sm">
-                    🚚 <span className="font-semibold">Delivery Fee:</span> {formatCurrencyShort(5.00)} 
+                <div className="glass-effect rounded-lg p-4">
+                  <p className="text-gray-300 text-sm flex items-center justify-center">
+                    🚚 <span className="font-semibold ml-2">Delivery Fee:</span> 
+                    <span className="text-red-400 ml-2">{formatCurrencyShort(5.00)}</span>
                     <span className="text-xs text-gray-500 ml-2">All prices in Ghanaian Cedis</span>
                   </p>
                 </div>
@@ -155,7 +157,7 @@ const Customer = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50">
+    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-red-950">
       <Header 
         cartItemCount={getTotalItems()}
         onCartClick={() => setIsCartOpen(true)}
@@ -163,16 +165,18 @@ const Customer = () => {
       />
       
       <main className="container mx-auto px-4 py-8">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-800 mb-4">
-            Welcome to <span className="text-orange-600">SpeedySpoon</span>
+        <div className="text-center mb-12 relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-red-600/20 to-transparent blur-3xl -z-10"></div>
+          <h1 className="text-5xl md:text-7xl font-bold text-white mb-4">
+            Welcome to <span className="gradient-text">SpeedySpoon</span>
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-6">
-            Fast, fresh, and delicious Ghanaian food delivered right to your doorstep
+          <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-8">
+            Experience the finest Ghanaian cuisine delivered to your doorstep with lightning speed
           </p>
-          <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 inline-block">
-            <p className="text-gray-700">
-              🚚 <span className="font-semibold">Delivery Fee:</span> {formatCurrencyShort(5.00)} 
+          <div className="glass-effect rounded-lg p-4 inline-block">
+            <p className="text-gray-300 flex items-center">
+              🚚 <span className="font-semibold ml-2">Delivery Fee:</span> 
+              <span className="text-red-400 ml-2">{formatCurrencyShort(5.00)}</span>
               <span className="text-sm text-gray-500 ml-2">All prices in Ghanaian Cedis</span>
             </p>
           </div>
