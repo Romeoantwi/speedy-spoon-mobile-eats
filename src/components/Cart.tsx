@@ -226,9 +226,11 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
               <h3 className="text-lg font-semibold mb-4">Your Active Order</h3>
               <OrderStatusTracker
                 order={currentOrder}
-                onOrderComplete={clearCurrentOrder}
-                onOrderCancelled={clearCurrentOrder}
-                onTrackMore={() => { /* Implement if needed */ }}
+                onStatusChange={(newStatus) => {
+                  if (newStatus === 'delivered' || newStatus === 'cancelled') {
+                    clearCurrentOrder();
+                  }
+                }}
               />
               <div className="mt-6 border-t pt-4">
                 <p className="text-gray-600 text-sm mb-2">You have an ongoing order. Would you like to start a new one?</p>
