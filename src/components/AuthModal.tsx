@@ -31,41 +31,56 @@ const AuthModal = ({ isOpen, onClose, onSuccess }: AuthModalProps) => {
 
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email: formData.email,
           password: formData.password,
         });
+        
         if (error) throw error;
         
-        toast({
-          title: "Welcome back! 👋",
-          description: "You've been signed in successfully.",
-        });
+        // Verify session was created
+        if (data.session) {
+          toast({
+            title: "Welcome back! 👋",
+            description: "You've been signed in successfully.",
+          });
+          onSuccess();
+          onClose();
+        }
       } else {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email: formData.email,
           password: formData.password,
           options: {
             data: {
               full_name: formData.fullName,
               phone_number: formData.phone,
-            }
+            },
+            emailRedirectTo: `${window.location.origin}/`
           }
         });
+        
         if (error) throw error;
         
-        toast({
-          title: "Account created! 🎉",
-          description: "Please check your email to verify your account.",
-        });
+        if (data.user && !data.session) {
+          toast({
+            title: "Account created! 🎉",
+            description: "Please check your email to verify your account.",
+          });
+        } else if (data.session) {
+          toast({
+            title: "Account created! 🎉",
+            description: "You've been signed up and logged in successfully.",
+          });
+          onSuccess();
+          onClose();
+        }
       }
-      
-      onSuccess();
-      onClose();
     } catch (error: any) {
+      console.error('Auth error:', error);
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "An error occurred during authentication",
         variant: "destructive"
       });
     } finally {
