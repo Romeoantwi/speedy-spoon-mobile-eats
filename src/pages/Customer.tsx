@@ -4,27 +4,41 @@ import Header from "@/components/Header";
 import MenuSection from "@/components/MenuSection";
 import Cart from "@/components/Cart";
 import AuthModal from "@/components/AuthModal";
-import { CartItem, FoodItem, CustomizationOption } from "@/types/food";
+import OrderLimitModal from "@/components/OrderLimitModal";
+import { CartItem, FoodItem, CustomizationOption, SpiceLevel } from "@/types/food";
 import { formatCurrencyShort } from "@/utils/currency";
+import { calculateDeliveryFee, isAtMaxOrderLimit } from "@/utils/deliveryFee";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { User, ShoppingCart, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 const Customer = () => {
   const { user, loading } = useAuth();
+  const { toast } = useToast();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showOrderLimitModal, setShowOrderLimitModal] = useState(false);
 
-  const addToCart = (item: FoodItem, selectedCustomizations: CustomizationOption[] = [], quantity: number = 1) => {
+  const addToCart = (item: FoodItem, selectedCustomizations: CustomizationOption[] = [], quantity: number = 1, spiceLevel?: SpiceLevel) => {
+    const totalItems = getTotalItems();
+    
+    // Check if adding this quantity would exceed the limit
+    if (totalItems + quantity > 5) {
+      setShowOrderLimitModal(true);
+      return;
+    }
+
     const customizationPrice = selectedCustomizations.reduce((total, c) => total + c.price, 0);
     const totalPrice = (item.price + customizationPrice) * quantity;
 
     setCartItems(prev => {
       const existingItemIndex = prev.findIndex(cartItem => 
         cartItem.id === item.id && 
-        JSON.stringify(cartItem.selectedCustomizations) === JSON.stringify(selectedCustomizations)
+        JSON.stringify(cartItem.selectedCustomizations) === JSON.stringify(selectedCustomizations) &&
+        cartItem.selectedSpiceLevel === spiceLevel
       );
       
       if (existingItemIndex !== -1) {
@@ -43,20 +57,45 @@ const Customer = () => {
         ...item, 
         quantity, 
         selectedCustomizations,
+        selectedSpiceLevel: spiceLevel,
         totalPrice
       }];
     });
+
+    toast({
+      title: "Added to Cart",
+      description: `${item.name} has been added to your cart.`,
+    });
   };
 
-  const updateQuantity = (id: number, quantity: number, selectedCustomizations?: CustomizationOption[]) => {
+  const updateQuantity = (id: number, quantity: number, selectedCustomizations?: CustomizationOption[], spiceLevel?: SpiceLevel) => {
     if (quantity === 0) {
       setCartItems(prev => prev.filter(item => 
-        !(item.id === id && JSON.stringify(item.selectedCustomizations) === JSON.stringify(selectedCustomizations))
+        !(item.id === id && 
+          JSON.stringify(item.selectedCustomizations) === JSON.stringify(selectedCustomizations) &&
+          item.selectedSpiceLevel === spiceLevel)
       ));
     } else {
+      const totalItems = getTotalItems();
+      const currentItem = cartItems.find(item => 
+        item.id === id && 
+        JSON.stringify(item.selectedCustomizations) === JSON.stringify(selectedCustomizations) &&
+        item.selectedSpiceLevel === spiceLevel
+      );
+      
+      if (currentItem) {
+        const difference = quantity - currentItem.quantity;
+        if (totalItems + difference > 5) {
+          setShowOrderLimitModal(true);
+          return;
+        }
+      }
+
       setCartItems(prev =>
         prev.map(item => {
-          if (item.id === id && JSON.stringify(item.selectedCustomizations) === JSON.stringify(selectedCustomizations)) {
+          if (item.id === id && 
+              JSON.stringify(item.selectedCustomizations) === JSON.stringify(selectedCustomizations) &&
+              item.selectedSpiceLevel === spiceLevel) {
             const customizationPrice = item.selectedCustomizations?.reduce((total, c) => total + c.price, 0) || 0;
             const unitPrice = item.price + customizationPrice;
             return { 
@@ -83,12 +122,16 @@ const Customer = () => {
     return cartItems.reduce((total, item) => total + item.totalPrice, 0);
   };
 
+  const getDeliveryFee = () => {
+    return calculateDeliveryFee(getTotalItems());
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-red-950 flex items-center justify-center">
         <div className="text-center">
           <img 
-            src="/lovable-uploads/f00a84b9-d2a8-4c94-99a5-09f87a39e9ee.png" 
+            src="/lovable-uploads/c9e05d0c-4ad3-4df5-a968-9f25705b273e.png" 
             alt="SpeedySpoon Logo" 
             className="h-20 w-auto mx-auto mb-4 animate-pulse"
           />
@@ -112,7 +155,7 @@ const Customer = () => {
             <div className="absolute inset-0 bg-gradient-to-r from-red-600/20 to-transparent blur-3xl -z-10"></div>
             <div className="flex justify-center mb-6">
               <img 
-                src="/lovable-uploads/f00a84b9-d2a8-4c94-99a5-09f87a39e9ee.png" 
+                src="/lovable-uploads/c9e05d0c-4ad3-4df5-a968-9f25705b273e.png" 
                 alt="SpeedySpoon Logo" 
                 className="h-24 w-auto"
               />
@@ -145,11 +188,14 @@ const Customer = () => {
                   Sign In to Continue
                 </Button>
                 <div className="glass-effect rounded-lg p-4">
-                  <p className="text-gray-300 text-sm flex items-center justify-center">
-                    🚚 <span className="font-semibold ml-2">Delivery Fee:</span> 
-                    <span className="text-red-400 ml-2">{formatCurrencyShort(5.00)}</span>
-                    <span className="text-xs text-gray-500 ml-2">All prices in Ghanaian Cedis</span>
+                  <p className="text-gray-300 text-sm">
+                    🚚 <span className="font-semibold">Delivery Fees:</span>
                   </p>
+                  <div className="text-xs text-gray-400 mt-2 space-y-1">
+                    <p>1 item: {formatCurrencyShort(5)} • 2 items: {formatCurrencyShort(8)}</p>
+                    <p>3 items: {formatCurrencyShort(12)} • 4 items: {formatCurrencyShort(16)}</p>
+                    <p>5 items: {formatCurrencyShort(20)} (Max 5 items per order)</p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -178,7 +224,7 @@ const Customer = () => {
           <div className="absolute inset-0 bg-gradient-to-r from-red-600/20 to-transparent blur-3xl -z-10"></div>
           <div className="flex justify-center mb-6">
             <img 
-              src="/lovable-uploads/f00a84b9-d2a8-4c94-99a5-09f87a39e9ee.png" 
+              src="/lovable-uploads/c9e05d0c-4ad3-4df5-a968-9f25705b273e.png" 
               alt="SpeedySpoon Logo" 
               className="h-24 w-auto"
             />
@@ -190,11 +236,14 @@ const Customer = () => {
             Experience the finest Ghanaian cuisine delivered to your doorstep with lightning speed
           </p>
           <div className="glass-effect rounded-lg p-4 inline-block">
-            <p className="text-gray-300 flex items-center">
-              🚚 <span className="font-semibold ml-2">Delivery Fee:</span> 
-              <span className="text-red-400 ml-2">{formatCurrencyShort(5.00)}</span>
-              <span className="text-sm text-gray-500 ml-2">All prices in Ghanaian Cedis</span>
+            <p className="text-gray-300 text-sm">
+              🚚 <span className="font-semibold">Delivery Fees:</span>
             </p>
+            <div className="text-xs text-gray-400 mt-2 space-y-1">
+              <p>1 item: {formatCurrencyShort(5)} • 2 items: {formatCurrencyShort(8)}</p>
+              <p>3 items: {formatCurrencyShort(12)} • 4 items: {formatCurrencyShort(16)}</p>
+              <p>5 items: {formatCurrencyShort(20)} <span className="text-orange-400">(Max 5 items per order)</span></p>
+            </div>
           </div>
         </div>
 
@@ -208,6 +257,12 @@ const Customer = () => {
         onUpdateQuantity={updateQuantity}
         onClearCart={clearCart}
         total={getTotalPrice()}
+        deliveryFee={getDeliveryFee()}
+      />
+
+      <OrderLimitModal
+        isOpen={showOrderLimitModal}
+        onClose={() => setShowOrderLimitModal(false)}
       />
     </div>
   );

@@ -16,12 +16,13 @@ interface CartProps {
   items: CartItem[];
   isOpen: boolean;
   onClose: () => void;
-  onUpdateQuantity: (id: number, quantity: number, selectedCustomizations?: any[]) => void;
+  onUpdateQuantity: (id: number, quantity: number, selectedCustomizations?: any[], spiceLevel?: any) => void;
   onClearCart: () => void;
   total: number;
+  deliveryFee: number;
 }
 
-const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: CartProps) => {
+const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total, deliveryFee }: CartProps) => {
   const { toast } = useToast();
   const { user } = useAuth();
   const { currentOrder, orderStatus, recentOrders, placeOrderAfterPayment, clearCurrentOrder, viewOrderDetails, loadingOrder } = useOrderManagement();
@@ -87,7 +88,6 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
       setPendingOrderData(orderData);
 
       // Process payment first
-      const deliveryFee = 5;
       const totalWithDelivery = total + deliveryFee;
 
       const result = await makePayment({
@@ -161,7 +161,6 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
 
   if (!isOpen) return null;
 
-  const deliveryFee = 5;
   const totalWithDelivery = total + deliveryFee;
 
   return (
@@ -344,9 +343,14 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
               ) : (
                 <div className="p-4">
                   {items.map((item) => (
-                    <div key={`${item.id}-${JSON.stringify(item.selectedCustomizations)}`} className="flex items-center justify-between py-3 border-b last:border-b-0">
+                    <div key={`${item.id}-${JSON.stringify(item.selectedCustomizations)}-${item.selectedSpiceLevel}`} className="flex items-center justify-between py-3 border-b last:border-b-0">
                       <div className="flex-1">
                         <p className="font-medium text-gray-800">{item.name}</p>
+                        {item.selectedSpiceLevel && (
+                          <p className="text-sm text-orange-600">
+                            🌶️ {item.selectedSpiceLevel.charAt(0).toUpperCase() + item.selectedSpiceLevel.slice(1)} spice
+                          </p>
+                        )}
                         {item.selectedCustomizations && item.selectedCustomizations.length > 0 && (
                           <p className="text-sm text-gray-500">
                             {item.selectedCustomizations.map(c => c.name).join(', ')}
@@ -358,7 +362,7 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
                         <Button
                           variant="outline"
                           size="icon"
-                          onClick={() => onUpdateQuantity(item.id, item.quantity - 1, item.selectedCustomizations)}
+                          onClick={() => onUpdateQuantity(item.id, item.quantity - 1, item.selectedCustomizations, item.selectedSpiceLevel)}
                           disabled={item.quantity <= 1}
                           className="w-8 h-8 text-gray-600 hover:bg-gray-100"
                         >
@@ -368,7 +372,7 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
                         <Button
                           variant="outline"
                           size="icon"
-                          onClick={() => onUpdateQuantity(item.id, item.quantity + 1, item.selectedCustomizations)}
+                          onClick={() => onUpdateQuantity(item.id, item.quantity + 1, item.selectedCustomizations, item.selectedSpiceLevel)}
                           className="w-8 h-8 text-gray-600 hover:bg-gray-100"
                         >
                           <Plus className="w-4 h-4" />
@@ -376,7 +380,7 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => onUpdateQuantity(item.id, 0, item.selectedCustomizations)}
+                          onClick={() => onUpdateQuantity(item.id, 0, item.selectedCustomizations, item.selectedSpiceLevel)}
                           className="w-8 h-8 text-red-500 hover:bg-red-50"
                         >
                           <X className="w-4 h-4" />
@@ -398,7 +402,7 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total }: 
               <p className="font-bold text-gray-800">{formatCurrency(total)}</p>
             </div>
             <div className="flex justify-between items-center mb-4">
-              <p className="text-gray-700">Delivery Fee:</p>
+              <p className="text-gray-700">Delivery Fee ({getTotalItems()} items):</p>
               <p className="font-bold text-gray-800">{formatCurrency(deliveryFee)}</p>
             </div>
             <div className="flex justify-between items-center text-lg font-bold text-gray-900 mb-4">

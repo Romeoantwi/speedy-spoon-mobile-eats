@@ -1,19 +1,20 @@
 
 import { useState } from "react";
-import { X, Plus, Minus, ShoppingCart } from "lucide-react";
+import { X, Plus, Minus, ShoppingCart, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { FoodItem, CustomizationOption } from "@/types/food";
+import { FoodItem, CustomizationOption, SpiceLevel } from "@/types/food";
 
 interface FoodDetailsModalProps {
   item: FoodItem;
   isOpen: boolean;
   onClose: () => void;
-  onAddToCart: (item: FoodItem, selectedCustomizations: CustomizationOption[], quantity: number) => void;
+  onAddToCart: (item: FoodItem, selectedCustomizations: CustomizationOption[], quantity: number, spiceLevel?: SpiceLevel) => void;
 }
 
 const FoodDetailsModal = ({ item, isOpen, onClose, onAddToCart }: FoodDetailsModalProps) => {
   const [quantity, setQuantity] = useState(1);
   const [selectedCustomizations, setSelectedCustomizations] = useState<CustomizationOption[]>([]);
+  const [selectedSpiceLevel, setSelectedSpiceLevel] = useState<SpiceLevel>('mild');
 
   if (!isOpen || !item) return null;
 
@@ -45,11 +46,20 @@ const FoodDetailsModal = ({ item, isOpen, onClose, onAddToCart }: FoodDetailsMod
 
   const handleAddToCart = () => {
     console.log('Adding to cart with customizations:', selectedCustomizations);
-    onAddToCart(item, selectedCustomizations, quantity);
+    console.log('Selected spice level:', selectedSpiceLevel);
+    onAddToCart(item, selectedCustomizations, quantity, item.hasSpiceLevels ? selectedSpiceLevel : undefined);
     onClose();
     setQuantity(1);
     setSelectedCustomizations([]);
+    setSelectedSpiceLevel('mild');
   };
+
+  const spiceLevels: { level: SpiceLevel; label: string; emoji: string }[] = [
+    { level: 'mild', label: 'Mild', emoji: '🟢' },
+    { level: 'medium', label: 'Medium', emoji: '🟡' },
+    { level: 'hot', label: 'Hot', emoji: '🟠' },
+    { level: 'extra-hot', label: 'Extra Hot', emoji: '🔥' },
+  ];
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
@@ -75,8 +85,33 @@ const FoodDetailsModal = ({ item, isOpen, onClose, onAddToCart }: FoodDetailsMod
           <p className="text-gray-600 mb-4">{item.description}</p>
           <div className="mb-4">
             <p className="text-xl font-bold text-orange-600">₵{item.price}</p>
-            <p className="text-sm text-gray-500">+ ₵5 delivery fee</p>
+            <p className="text-sm text-gray-500">+ delivery fee varies by quantity</p>
           </div>
+
+          {/* Spice Level Selection */}
+          {item.hasSpiceLevels && (
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-3">
+                Choose Spice Level
+              </h3>
+              <div className="grid grid-cols-2 gap-2">
+                {spiceLevels.map(({ level, label, emoji }) => (
+                  <div
+                    key={level}
+                    className={`flex items-center justify-center p-3 border rounded-lg cursor-pointer transition-all ${
+                      selectedSpiceLevel === level
+                        ? 'bg-orange-50 border-orange-200 ring-2 ring-orange-500'
+                        : 'hover:bg-gray-50 border-gray-200'
+                    }`}
+                    onClick={() => setSelectedSpiceLevel(level)}
+                  >
+                    <span className="text-lg mr-2">{emoji}</span>
+                    <span className="font-medium text-gray-800">{label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Extras Section */}
           {item.customizations && item.customizations.length > 0 && (
