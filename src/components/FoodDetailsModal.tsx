@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { X, Plus, Minus, ShoppingCart, Phone } from "lucide-react";
+import { X, Plus, Minus, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FoodItem, CustomizationOption, SpiceLevel } from "@/types/food";
 
@@ -40,8 +40,7 @@ const FoodDetailsModal = ({ item, isOpen, onClose, onAddToCart }: FoodDetailsMod
 
   const getTotalPrice = () => {
     const customizationPrice = selectedCustomizations.reduce((total, c) => total + c.price, 0);
-    const deliveryFee = 5;
-    return (item.price + customizationPrice + deliveryFee) * quantity;
+    return (item.price + customizationPrice) * quantity;
   };
 
   const handleAddToCart = () => {
@@ -85,7 +84,6 @@ const FoodDetailsModal = ({ item, isOpen, onClose, onAddToCart }: FoodDetailsMod
           <p className="text-gray-600 mb-4">{item.description}</p>
           <div className="mb-4">
             <p className="text-xl font-bold text-orange-600">₵{item.price}</p>
-            <p className="text-sm text-gray-500">+ delivery fee varies by quantity</p>
           </div>
 
           {/* Spice Level Selection */}

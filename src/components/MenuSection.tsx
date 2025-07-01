@@ -1,12 +1,12 @@
 
 import { useState } from "react";
-import { FoodItem, MenuCategory, CustomizationOption } from "@/types/food";
+import { FoodItem, MenuCategory, CustomizationOption, SpiceLevel } from "@/types/food";
 import FoodCard from "./FoodCard";
 import FoodDetailsModal from "./FoodDetailsModal";
 import { Button } from "@/components/ui/button";
 
 interface MenuSectionProps {
-  onAddToCart: (item: FoodItem, selectedCustomizations?: CustomizationOption[], quantity?: number) => void;
+  onAddToCart: (item: FoodItem, selectedCustomizations?: CustomizationOption[], quantity?: number, spiceLevel?: SpiceLevel) => void;
 }
 
 const menuData: MenuCategory[] = [
@@ -23,6 +23,7 @@ const menuData: MenuCategory[] = [
         category: "main-dishes",
         rating: 4.9,
         prepTime: "25-30 min",
+        hasSpiceLevels: true,
         customizations: [
           { id: "egg1", name: "Egg", price: 4, category: "extra" },
           { id: "chicken1", name: "Extra Chicken", price: 15, category: "extra" },
@@ -39,6 +40,7 @@ const menuData: MenuCategory[] = [
         category: "main-dishes",
         rating: 4.8,
         prepTime: "25-30 min",
+        hasSpiceLevels: true,
         customizations: [
           { id: "egg2", name: "Egg", price: 4, category: "extra" },
           { id: "chicken2", name: "Extra Chicken", price: 15, category: "extra" },
@@ -55,6 +57,7 @@ const menuData: MenuCategory[] = [
         category: "main-dishes",
         rating: 4.7,
         prepTime: "20-25 min",
+        hasSpiceLevels: true,
         customizations: [
           { id: "egg3", name: "Egg", price: 4, category: "extra" },
           { id: "chicken3", name: "Extra Chicken", price: 15, category: "extra" },
@@ -71,6 +74,7 @@ const menuData: MenuCategory[] = [
         category: "main-dishes",
         rating: 4.6,
         prepTime: "20-25 min",
+        hasSpiceLevels: true,
         customizations: [
           { id: "egg4", name: "Egg", price: 4, category: "extra" },
           { id: "chicken4", name: "Extra Chicken", price: 15, category: "extra" },
@@ -89,15 +93,15 @@ const MenuSection = ({ onAddToCart }: MenuSectionProps) => {
   const currentCategory = menuData.find(cat => cat.id === activeCategory);
 
   const handleFoodCardClick = (item: FoodItem) => {
-    if (item.customizations && item.customizations.length > 0) {
+    if ((item.customizations && item.customizations.length > 0) || item.hasSpiceLevels) {
       setSelectedItem(item);
     } else {
       onAddToCart(item);
     }
   };
 
-  const handleModalAddToCart = (item: FoodItem, selectedCustomizations: CustomizationOption[], quantity: number) => {
-    onAddToCart(item, selectedCustomizations, quantity);
+  const handleModalAddToCart = (item: FoodItem, selectedCustomizations: CustomizationOption[], quantity: number, spiceLevel?: SpiceLevel) => {
+    onAddToCart(item, selectedCustomizations, quantity, spiceLevel);
     setSelectedItem(null);
   };
 
