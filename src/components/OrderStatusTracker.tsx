@@ -93,7 +93,7 @@ const OrderStatusTracker = ({ order, onStatusChange }: OrderStatusTrackerProps) 
                   {isCurrent && (
                     <p className="text-sm text-red-400 animate-pulse font-medium">
                       {step.status === 'preparing' && '🔥 Estimated time: 20-25 minutes'}
-                      {step.status === 'picked_up' && '🚗 Driver is on the way!'}
+                      {step.status === 'picked_up' && '🚚 On the way to you!'}
                       {step.status === 'placed' && '✅ Order confirmed'}
                       {step.status === 'ready' && '📦 Ready for pickup'}
                     </p>
@@ -114,7 +114,7 @@ const OrderStatusTracker = ({ order, onStatusChange }: OrderStatusTrackerProps) 
           <p className="text-blue-300 font-semibold flex items-center">
             🚗 <span className="ml-2">Your order is on the way!</span>
           </p>
-          <p className="text-blue-400 text-sm mt-1">Track your driver in real-time below</p>
+          <p className="text-blue-400 text-sm mt-1">Track your order progress below</p>
         </div>
       )}
 

@@ -15,9 +15,6 @@ import { Order } from '@/types/order';
 
 interface OrderWithDetails extends Order {
   customer_name?: string;
-  driver_name?: string;
-  driver_phone?: string;
-  driver_vehicle?: string;
 }
 
 const RestaurantDashboard = () => {
@@ -64,7 +61,7 @@ const RestaurantDashboard = () => {
     }
   };
 
-  // Enrich orders with customer and driver details
+  // Enrich orders with customer details
   useEffect(() => {
     const enrichOrdersWithDetails = async () => {
       if (orders.length === 0) {
@@ -90,37 +87,6 @@ const RestaurantDashboard = () => {
           } catch (error) {
             console.log('Customer profile not found for order:', order.id);
             enrichedOrder.customer_name = 'N/A';
-          }
-
-          // Get driver details if assigned
-          if (order.driver_id) {
-            try {
-              const { data: driverProfile } = await supabase
-                .from('profiles')
-                .select('full_name, phone_number')
-                .eq('id', order.driver_id)
-                .single();
-
-              const { data: driverDetails } = await supabase
-                .from('driver_profiles')
-                .select('vehicle_type, vehicle_model, vehicle_plate_number')
-                .eq('user_id', order.driver_id)
-                .single();
-
-              if (driverProfile) {
-                enrichedOrder.driver_name = driverProfile.full_name || 'N/A';
-                enrichedOrder.driver_phone = driverProfile.phone_number || 'N/A';
-              }
-
-              if (driverDetails) {
-                enrichedOrder.driver_vehicle = `${driverDetails.vehicle_type} - ${driverDetails.vehicle_model || 'N/A'} (${driverDetails.vehicle_plate_number || 'N/A'})`;
-              }
-            } catch (error) {
-              console.log('Driver details not found for order:', order.id);
-              enrichedOrder.driver_name = 'N/A';
-              enrichedOrder.driver_phone = 'N/A';
-              enrichedOrder.driver_vehicle = 'N/A';
-            }
           }
 
           return enrichedOrder;

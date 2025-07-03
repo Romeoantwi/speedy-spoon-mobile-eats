@@ -8,7 +8,7 @@ import AuthModal from "./AuthModal";
 interface HeaderProps {
   cartItemCount?: number;
   onCartClick?: () => void;
-  userType?: 'customer' | 'driver' | 'restaurant';
+  userType?: 'customer' | 'restaurant';
 }
 
 const Header = ({ cartItemCount = 0, onCartClick, userType = 'customer' }: HeaderProps) => {

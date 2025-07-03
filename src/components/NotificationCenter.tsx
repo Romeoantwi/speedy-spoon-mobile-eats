@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 
 interface Notification {
   id: string;
-  type: 'restaurant' | 'driver' | 'customer';
+  type: 'restaurant' | 'customer';
   title: string;
   message: string;
   timestamp: string;
@@ -16,7 +16,7 @@ interface Notification {
 }
 
 interface NotificationCenterProps {
-  userType: 'restaurant' | 'driver' | 'customer';
+  userType: 'restaurant' | 'customer';
 }
 
 const NotificationCenter = ({ userType }: NotificationCenterProps) => {
@@ -31,15 +31,6 @@ const NotificationCenter = ({ userType }: NotificationCenterProps) => {
         title: 'New Order Received! 🍽️',
         message: 'Order #ORD-ABC123 - Assorted Jollof with Chicken. Total: ₵45',
         timestamp: new Date().toISOString(),
-        isRead: false,
-        orderId: 'ORD-ABC123'
-      },
-      {
-        id: '2',
-        type: 'driver',
-        title: 'Delivery Assignment 🚗',
-        message: 'Order #ORD-ABC123 is ready for pickup at SpeedySpoon',
-        timestamp: new Date(Date.now() - 300000).toISOString(),
         isRead: false,
         orderId: 'ORD-ABC123'
       },
@@ -73,8 +64,6 @@ const NotificationCenter = ({ userType }: NotificationCenterProps) => {
     switch (type) {
       case 'restaurant':
         return <ChefHat className="w-5 h-5 text-orange-600" />;
-      case 'driver':
-        return <Truck className="w-5 h-5 text-blue-600" />;
       default:
         return <Bell className="w-5 h-5 text-gray-600" />;
     }

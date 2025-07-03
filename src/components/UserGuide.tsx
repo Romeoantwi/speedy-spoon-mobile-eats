@@ -6,7 +6,6 @@ import {
   Smartphone, 
   Users, 
   ShoppingCart, 
-  Truck, 
   Settings, 
   Database,
   Github,
@@ -32,11 +31,10 @@ const UserGuide = () => {
       </Card>
 
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="customer">Customer</TabsTrigger>
           <TabsTrigger value="restaurant">Restaurant</TabsTrigger>
-          <TabsTrigger value="driver">Driver</TabsTrigger>
           <TabsTrigger value="tech">Technology</TabsTrigger>
           <TabsTrigger value="mobile">Mobile</TabsTrigger>
         </TabsList>
@@ -90,7 +88,7 @@ const UserGuide = () => {
               <CardTitle>User Roles & Access</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="p-4 bg-blue-50 rounded-lg">
                   <Badge className="mb-2">Customer</Badge>
                   <p className="text-sm">Browse menu, place orders, track delivery, manage payment methods</p>
@@ -98,10 +96,6 @@ const UserGuide = () => {
                 <div className="p-4 bg-green-50 rounded-lg">
                   <Badge className="mb-2">Restaurant Admin</Badge>
                   <p className="text-sm">Manage orders, view analytics, update menu, handle operations</p>
-                </div>
-                <div className="p-4 bg-orange-50 rounded-lg">
-                  <Badge className="mb-2">Driver</Badge>
-                  <p className="text-sm">Accept deliveries, update location, manage availability status</p>
                 </div>
               </div>
             </CardContent>
@@ -122,7 +116,7 @@ const UserGuide = () => {
                   <h4 className="font-semibold">1. Browse & Order</h4>
                   <p className="text-sm">• View restaurant menu with photos and descriptions</p>
                   <p className="text-sm">• Add items to cart with customizations</p>
-                  <p className="text-sm">• Specify delivery address with map integration</p>
+                  <p className="text-sm">• Specify delivery address manually</p>
                 </div>
                 <div className="p-3 border-l-4 border-green-500 bg-green-50">
                   <h4 className="font-semibold">2. Payment & Checkout</h4>
@@ -133,7 +127,7 @@ const UserGuide = () => {
                 <div className="p-3 border-l-4 border-orange-500 bg-orange-50">
                   <h4 className="font-semibold">3. Real-time Tracking</h4>
                   <p className="text-sm">• Live order status updates</p>
-                  <p className="text-sm">• Driver assignment notifications</p>
+                  <p className="text-sm">• Order preparation notifications</p>
                   <p className="text-sm">• Delivery progress tracking</p>
                 </div>
               </div>
@@ -166,7 +160,7 @@ const UserGuide = () => {
                   <ul className="text-sm space-y-1">
                     <li>• View incoming orders in real-time</li>
                     <li>• Update order status (confirmed → preparing → ready)</li>
-                    <li>• Automatic driver assignment</li>
+                    <li>• Manual delivery coordination</li>
                     <li>• Customer notifications</li>
                   </ul>
                 </div>
@@ -175,7 +169,7 @@ const UserGuide = () => {
                   <ul className="text-sm space-y-1">
                     <li>• Daily/weekly sales reports</li>
                     <li>• Popular items tracking</li>
-                    <li>• Driver performance metrics</li>
+                    <li>• Order delivery metrics</li>
                     <li>• Customer satisfaction data</li>
                   </ul>
                 </div>
@@ -184,38 +178,6 @@ const UserGuide = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="driver" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Truck className="w-5 h-5 mr-2" />
-                Driver Operations
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <h4 className="font-semibold mb-2">Driver Registration:</h4>
-                <ol className="text-sm space-y-1 list-decimal list-inside">
-                  <li>Visit <code>/driver-signup</code></li>
-                  <li>Complete driver profile with license details</li>
-                  <li>Provide vehicle information</li>
-                  <li>Set availability status</li>
-                </ol>
-              </div>
-              
-              <div className="space-y-3">
-                <div className="p-3 border-l-4 border-blue-500 bg-blue-50">
-                  <h4 className="font-semibold">Automatic Assignment</h4>
-                  <p className="text-sm">System automatically assigns orders to available drivers based on rating and delivery count</p>
-                </div>
-                <div className="p-3 border-l-4 border-green-500 bg-green-50">
-                  <h4 className="font-semibold">Status Updates</h4>
-                  <p className="text-sm">Update delivery status: picked_up → delivered with real-time customer notifications</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
 
         <TabsContent value="tech" className="space-y-4">
           <Card>
@@ -232,7 +194,6 @@ const UserGuide = () => {
                   <ul className="text-sm space-y-1">
                     <li>• <code>profiles</code> - User information</li>
                     <li>• <code>orders</code> - Order management</li>
-                    <li>• <code>driver_profiles</code> - Driver data</li>
                     <li>• <code>notifications</code> - Real-time alerts</li>
                     <li>• <code>payment_methods</code> - Payment info</li>
                   </ul>
@@ -242,9 +203,9 @@ const UserGuide = () => {
                   <ul className="text-sm space-y-1">
                     <li>• Order status subscriptions</li>
                     <li>• Live dashboard updates</li>
-                    <li>• Driver location tracking</li>
+                    <li>• Location tracking</li>
                     <li>• Instant notifications</li>
-                    <li>• Auto-driver assignment</li>
+                    <li>• Auto-order processing</li>
                   </ul>
                 </div>
               </div>
@@ -256,7 +217,6 @@ const UserGuide = () => {
                   <p>• <code>useAdminAuth</code> - Admin role verification</p>
                   <p>• <code>useRealTimeOrders</code> - Live order updates</p>
                   <p>• <code>useOrderManagement</code> - Order creation/updates</p>
-                  <p>• <code>LocationMap</code> - Address selection with Ghana locations</p>
                   <p>• <code>PaymentMethods</code> - Ghana-specific payment options</p>
                 </div>
               </div>
@@ -309,7 +269,7 @@ const UserGuide = () => {
                 <h4 className="font-semibold mb-2">Native Capabilities Available:</h4>
                 <div className="text-sm space-y-1">
                   <p>• Push notifications for order updates</p>
-                  <p>• GPS location for delivery tracking</p>
+                  <p>• Location services for delivery</p>
                   <p>• Camera for profile pictures</p>
                   <p>• Local storage for offline capability</p>
                   <p>• Biometric authentication</p>
