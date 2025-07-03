@@ -5,7 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { 
   ShoppingCart, 
-  Truck, 
   Clock, 
   MapPin, 
   CreditCard,
@@ -40,9 +39,9 @@ const Index = () => {
           </Badge>
         </div>
 
-        {/* Quick Access Cards - Only Customer and Driver */}
-        <div className="grid md:grid-cols-2 gap-8 mb-16 max-w-4xl mx-auto">
-          <Card className="group hover:scale-105 transition-all duration-300 bg-gradient-to-br from-gray-900 to-black border-red-600/30 hover:border-red-500 relative overflow-hidden">
+        {/* Quick Access Card - Customer Only */}
+        <div className="flex justify-center mb-16">
+          <Card className="group hover:scale-105 transition-all duration-300 bg-gradient-to-br from-gray-900 to-black border-red-600/30 hover:border-red-500 relative overflow-hidden max-w-md w-full">
             <div className="absolute inset-0 bg-gradient-to-br from-red-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             <Link to="/customer" className="relative z-10">
               <CardHeader className="text-center">
@@ -55,24 +54,6 @@ const Index = () => {
               <CardContent>
                 <Button className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold">
                   Start Ordering
-                </Button>
-              </CardContent>
-            </Link>
-          </Card>
-
-          <Card className="group hover:scale-105 transition-all duration-300 bg-gradient-to-br from-gray-900 to-black border-red-600/30 hover:border-red-500 relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-red-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <Link to="/driver-signup" className="relative z-10">
-              <CardHeader className="text-center">
-                <div className="mx-auto mb-4 w-20 h-20 bg-gradient-to-br from-gray-700 to-gray-800 rounded-full flex items-center justify-center group-hover:shadow-lg group-hover:shadow-gray-600/50 transition-all duration-300">
-                  <Truck className="w-10 h-10 text-red-400" />
-                </div>
-                <CardTitle className="text-red-400 text-xl">Become a Driver</CardTitle>
-                <CardDescription className="text-gray-400">Join our elite delivery team</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button className="w-full bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-800 hover:to-gray-900 text-white font-semibold">
-                  Join as Driver
                 </Button>
               </CardContent>
             </Link>
@@ -121,7 +102,7 @@ const Index = () => {
                   <span className="text-2xl font-bold">1</span>
                 </div>
                 <h4 className="font-bold mb-2 text-lg">Create Account</h4>
-                <p className="text-red-100">Sign up as customer or driver</p>
+                <p className="text-red-100">Sign up as customer</p>
               </div>
               <div className="group">
                 <div className="bg-white/20 backdrop-blur rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
@@ -135,7 +116,7 @@ const Index = () => {
                   <Heart className="w-8 h-8" />
                 </div>
                 <h4 className="font-bold mb-2 text-lg">Start Enjoying</h4>
-                <p className="text-red-100">Order food or start delivering</p>
+                <p className="text-red-100">Order delicious food</p>
               </div>
             </div>
           </CardContent>
