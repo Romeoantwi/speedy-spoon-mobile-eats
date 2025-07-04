@@ -1,7 +1,8 @@
 
 import { useState, useEffect } from "react";
-import { X, Minus, Plus, ShoppingBag, CreditCard, Loader2, Clock } from "lucide-react";
+import { X, Minus, Plus, ShoppingBag, CreditCard, Loader2, Clock, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { CartItem } from "@/types/food";
 import { useToast } from "@/hooks/use-toast";
 import { useOrderManagement } from "@/hooks/useOrderManagement";
@@ -33,6 +34,7 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total, de
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [pendingOrderData, setPendingOrderData] = useState<{ items: CartItem[], address: string } | null>(null);
   const [showOrderHistory, setShowOrderHistory] = useState(false);
+  const [deliveryFeeAgreed, setDeliveryFeeAgreed] = useState(false);
 
   const isProcessingOrder = loadingOrder || paymentLoading;
 
@@ -88,7 +90,7 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total, de
       setPendingOrderData(orderData);
 
       // Process payment first
-      const totalWithDelivery = total + deliveryFee;
+      const totalWithDelivery = deliveryFeeAgreed ? total + deliveryFee : total;
 
       const result = await makePayment({
         email: user.email || '',
@@ -161,7 +163,7 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total, de
 
   if (!isOpen) return null;
 
-  const totalWithDelivery = total + deliveryFee;
+  const totalWithDelivery = deliveryFeeAgreed ? total + deliveryFee : total;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end md:items-center justify-center">
@@ -401,20 +403,49 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total, de
               <p className="text-gray-700">Subtotal:</p>
               <p className="font-bold text-gray-800">{formatCurrency(total)}</p>
             </div>
-            <div className="flex justify-between items-center mb-4">
-              <p className="text-gray-700">Delivery Fee ({getTotalItems()} items):</p>
-              <p className="font-bold text-gray-800">{formatCurrency(deliveryFee)}</p>
+            
+            {/* Delivery Fee Agreement Section */}
+            <div className="mb-4 p-3 bg-orange-50 rounded-lg border border-orange-200">
+              <div className="flex items-start space-x-3 mb-3">
+                <Checkbox
+                  id="delivery-fee-agreement"
+                  checked={deliveryFeeAgreed}
+                  onCheckedChange={(checked) => setDeliveryFeeAgreed(checked === true)}
+                  className="mt-1"
+                />
+                <div className="flex-1">
+                  <label 
+                    htmlFor="delivery-fee-agreement" 
+                    className="text-sm font-medium text-gray-800 cursor-pointer"
+                  >
+                    I agree to the delivery fee structure
+                  </label>
+                  <div className="text-xs text-gray-600 mt-1 space-y-1">
+                    <p>• 1 item: {formatCurrency(5)} • 2 items: {formatCurrency(8)}</p>
+                    <p>• 3 items: {formatCurrency(12)} • 4 items: {formatCurrency(16)} • 5 items: {formatCurrency(20)}</p>
+                  </div>
+                </div>
+              </div>
+              
+              {deliveryFeeAgreed && (
+                <div className="flex justify-between items-center pt-2 border-t border-orange-300">
+                  <p className="text-gray-700 font-medium">Delivery Fee ({getTotalItems()} items):</p>
+                  <p className="font-bold text-orange-600">{formatCurrency(deliveryFee)}</p>
+                </div>
+              )}
             </div>
+            
             <div className="flex justify-between items-center text-lg font-bold text-gray-900 mb-4">
               <p>Total:</p>
-              <p>{formatCurrency(totalWithDelivery)}</p>
+              <p className={deliveryFeeAgreed ? "text-orange-600" : ""}>{formatCurrency(totalWithDelivery)}</p>
             </div>
+            
             <Button
               onClick={handleCheckout}
-              className="w-full bg-orange-500 hover:bg-orange-600"
-              disabled={items.length === 0 || isProcessingOrder}
+              className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400"
+              disabled={items.length === 0 || isProcessingOrder || !deliveryFeeAgreed}
             >
-              Pay Now & Place Order
+              {!deliveryFeeAgreed ? "Agree to Delivery Fees to Continue" : "Pay Now & Place Order"}
             </Button>
           </div>
         )}
