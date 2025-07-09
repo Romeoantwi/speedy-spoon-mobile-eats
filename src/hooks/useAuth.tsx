@@ -21,14 +21,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     let mounted = true;
 
-    // Get initial session with better error handling
+    // Get initial session with robust error handling
     const getInitialSession = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         if (mounted) {
           if (error) {
             console.error('Error getting session:', error);
-            // Don't set user to null on session errors, might be temporary
+            // Only clear user on auth errors, not network errors
+            if (error.message?.includes('Auth') || error.message?.includes('JWT')) {
+              setUser(null);
+            }
           } else {
             setUser(session?.user ?? null);
           }
@@ -44,23 +47,41 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     getInitialSession();
 
-    // Listen for auth changes with improved handling
+    // Enhanced auth state change handling with session persistence
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (mounted) {
           console.log('Auth state changed:', event, session?.user?.id);
           
-          // Handle different auth events appropriately
+          // Handle different auth events with better session persistence
           if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
             setUser(session?.user ?? null);
+            setLoading(false);
           } else if (event === 'SIGNED_OUT') {
             setUser(null);
+            setLoading(false);
           } else if (event === 'USER_UPDATED') {
-            // Keep the user logged in on user updates
+            // Maintain session on user updates
             setUser(session?.user ?? null);
+            setLoading(false);
+          } else if (event === 'PASSWORD_RECOVERY') {
+            // Handle password recovery without signing out
+            console.log('Password recovery initiated');
           }
           
-          setLoading(false);
+          // Additional resilience for local development
+          if (!session && event !== 'SIGNED_OUT') {
+            // Try to recover session if it exists in storage
+            const storedSession = localStorage.getItem('supabase.auth.token');
+            if (storedSession) {
+              console.log('Attempting session recovery...');
+              try {
+                await supabase.auth.getSession();
+              } catch (error) {
+                console.log('Session recovery failed:', error);
+              }
+            }
+          }
         }
       }
     );
