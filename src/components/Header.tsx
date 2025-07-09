@@ -4,6 +4,7 @@ import { ShoppingCart, User, LogOut, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import AuthModal from "./AuthModal";
+import speedySpoonLogo from "@/assets/speedyspoon-logo.png";
 
 interface HeaderProps {
   cartItemCount?: number;
@@ -26,7 +27,7 @@ const Header = ({ cartItemCount = 0, onCartClick, userType = 'customer' }: Heade
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <img 
-              src="/lovable-uploads/f00a84b9-d2a8-4c94-99a5-09f87a39e9ee.png" 
+              src={speedySpoonLogo} 
               alt="SpeedySpoon Logo" 
               className="h-12 w-auto"
             />

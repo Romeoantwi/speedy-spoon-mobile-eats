@@ -4,6 +4,10 @@ import { FoodItem, MenuCategory, CustomizationOption, SpiceLevel } from "@/types
 import FoodCard from "./FoodCard";
 import FoodDetailsModal from "./FoodDetailsModal";
 import { Button } from "@/components/ui/button";
+import jollofRiceImage from "@/assets/jollof-rice.jpg";
+import bankuTilapiaImage from "@/assets/banku-tilapia.jpg";
+import keleweleImage from "@/assets/kelewele.jpg";
+import waakeyeImage from "@/assets/waakye.jpg";
 
 interface MenuSectionProps {
   onAddToCart: (item: FoodItem, selectedCustomizations?: CustomizationOption[], quantity?: number, spiceLevel?: SpiceLevel) => void;
@@ -19,7 +23,7 @@ const menuData: MenuCategory[] = [
         name: "Assorted Jollof with Chicken and Salad",
         description: "Traditional Ghanaian jollof rice with assorted chicken pieces and fresh salad",
         price: 35,
-        image: "https://images.unsplash.com/photo-1604329760661-e71dc83f8f26?auto=format&fit=crop&w=500",
+        image: jollofRiceImage,
         category: "main-dishes",
         rating: 4.9,
         prepTime: "25-30 min",
@@ -33,53 +37,52 @@ const menuData: MenuCategory[] = [
       },
       {
         id: 2,
-        name: "Assorted Fried Rice with Chicken",
-        description: "Delicious fried rice with assorted chicken and vegetables",
-        price: 35,
-        image: "https://images.unsplash.com/photo-1603133872878-684f208fb84b?auto=format&fit=crop&w=500",
+        name: "Banku with Tilapia",
+        description: "Traditional Ghanaian corn dough served with grilled tilapia and spicy pepper sauce",
+        price: 30,
+        image: bankuTilapiaImage,
         category: "main-dishes",
         rating: 4.8,
-        prepTime: "25-30 min",
+        prepTime: "30-35 min",
         hasSpiceLevels: true,
         customizations: [
           { id: "egg2", name: "Egg", price: 4, category: "extra" },
-          { id: "chicken2", name: "Extra Chicken", price: 15, category: "extra" },
-          { id: "gizzard2", name: "Gizzard", price: 10, category: "extra" },
+          { id: "fish2", name: "Extra Fish", price: 15, category: "extra" },
+          { id: "shito2", name: "Extra Shito", price: 3, category: "extra" },
           { id: "plantain2", name: "Fried Plantain (3 pieces)", price: 5, category: "extra" }
         ]
       },
       {
         id: 3,
-        name: "Assorted Noodles",
-        description: "Tasty noodles with assorted meat and spices",
-        price: 30,
-        image: "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=500",
+        name: "Waakye Special",
+        description: "Delicious rice and beans served with boiled eggs, wele, and traditional shito sauce",
+        price: 25,
+        image: waakeyeImage,
         category: "main-dishes",
         rating: 4.7,
         prepTime: "20-25 min",
         hasSpiceLevels: true,
         customizations: [
           { id: "egg3", name: "Egg", price: 4, category: "extra" },
-          { id: "chicken3", name: "Extra Chicken", price: 15, category: "extra" },
-          { id: "gizzard3", name: "Gizzard", price: 10, category: "extra" },
+          { id: "wele3", name: "Extra Wele", price: 8, category: "extra" },
+          { id: "gari3", name: "Gari", price: 2, category: "extra" },
           { id: "sausage3", name: "Sausage", price: 4, category: "extra" }
         ]
       },
       {
         id: 4,
-        name: "Assorted Spaghetti",
-        description: "Classic spaghetti with assorted meat in rich tomato sauce",
-        price: 25,
-        image: "https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?auto=format&fit=crop&w=500",
+        name: "Kelewele (Spiced Plantains)",
+        description: "Crispy fried plantain cubes seasoned with traditional Ghanaian spices and ginger",
+        price: 15,
+        image: keleweleImage,
         category: "main-dishes",
         rating: 4.6,
-        prepTime: "20-25 min",
+        prepTime: "15-20 min",
         hasSpiceLevels: true,
         customizations: [
-          { id: "egg4", name: "Egg", price: 4, category: "extra" },
-          { id: "chicken4", name: "Extra Chicken", price: 15, category: "extra" },
-          { id: "gizzard4", name: "Gizzard", price: 10, category: "extra" },
-          { id: "sausage4", name: "Sausage", price: 4, category: "extra" }
+          { id: "nuts4", name: "Groundnuts", price: 3, category: "extra" },
+          { id: "pepper4", name: "Extra Pepper", price: 2, category: "extra" },
+          { id: "ginger4", name: "Extra Ginger", price: 2, category: "extra" }
         ]
       }
     ]

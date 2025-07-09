@@ -12,6 +12,7 @@ import {
   Zap,
   Heart
 } from "lucide-react";
+import speedySpoonLogo from "@/assets/speedyspoon-logo.png";
 
 const Index = () => {
   return (
@@ -22,7 +23,7 @@ const Index = () => {
           <div className="absolute inset-0 bg-gradient-to-r from-red-600/20 to-transparent blur-3xl -z-10"></div>
           <div className="flex justify-center mb-6">
             <img 
-              src="/lovable-uploads/f00a84b9-d2a8-4c94-99a5-09f87a39e9ee.png" 
+              src={speedySpoonLogo} 
               alt="SpeedySpoon Logo" 
               className="h-32 w-auto"
             />

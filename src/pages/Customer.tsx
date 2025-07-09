@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { User, ShoppingCart, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import speedySpoonLogo from "@/assets/speedyspoon-logo.png";
 
 const Customer = () => {
   const { user, loading } = useAuth();
@@ -131,7 +132,7 @@ const Customer = () => {
       <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-red-950 flex items-center justify-center">
         <div className="text-center">
           <img 
-            src="/lovable-uploads/c9e05d0c-4ad3-4df5-a968-9f25705b273e.png" 
+            src={speedySpoonLogo} 
             alt="SpeedySpoon Logo" 
             className="h-20 w-auto mx-auto mb-4 animate-pulse"
           />
@@ -155,7 +156,7 @@ const Customer = () => {
             <div className="absolute inset-0 bg-gradient-to-r from-red-600/20 to-transparent blur-3xl -z-10"></div>
             <div className="flex justify-center mb-6">
               <img 
-                src="/lovable-uploads/c9e05d0c-4ad3-4df5-a968-9f25705b273e.png" 
+                src={speedySpoonLogo} 
                 alt="SpeedySpoon Logo" 
                 className="h-24 w-auto"
               />
@@ -224,7 +225,7 @@ const Customer = () => {
           <div className="absolute inset-0 bg-gradient-to-r from-red-600/20 to-transparent blur-3xl -z-10"></div>
           <div className="flex justify-center mb-6">
             <img 
-              src="/lovable-uploads/c9e05d0c-4ad3-4df5-a968-9f25705b273e.png" 
+              src={speedySpoonLogo} 
               alt="SpeedySpoon Logo" 
               className="h-24 w-auto"
             />
