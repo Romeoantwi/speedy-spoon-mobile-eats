@@ -16,11 +16,18 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     detectSessionInUrl: true,
     storage: typeof window !== 'undefined' ? window.localStorage : null,
     storageKey: 'supabase.auth.token',
-    flowType: 'pkce'
+    flowType: 'pkce',
+    debug: false,
+    lock: true // Prevent concurrent auth operations
   },
   global: {
     headers: {
       'X-Client-Info': 'speedyspoon@1.0.0'
+    }
+  },
+  realtime: {
+    params: {
+      eventsPerSecond: 2
     }
   }
 });
