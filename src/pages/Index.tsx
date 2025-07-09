@@ -30,13 +30,6 @@ const Index = () => {
           <p className="text-3xl md:text-4xl font-bold text-red-400 mb-6 uppercase tracking-wider">
             Get Your Feast No Sweat
           </p>
-          <p className="text-xl md:text-2xl text-gray-300 mb-6 max-w-3xl mx-auto">
-            Premium Food Delivery Platform
-          </p>
-          <Badge variant="secondary" className="text-lg px-6 py-3 bg-red-600/20 text-red-400 border-red-600/30">
-            <Zap className="w-5 h-5 mr-2" />
-            Next-Gen Multi-User System
-          </Badge>
         </div>
 
         {/* Quick Access Card - Customer Only */}
