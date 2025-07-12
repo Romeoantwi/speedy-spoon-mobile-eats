@@ -1,4 +1,4 @@
-import { CapacitorConfig } from '@capacitor/core';
+import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'app.lovable.140dbf6e66ea4ed5bbc32b0669d696a2',
@@ -10,15 +10,20 @@ const config: CapacitorConfig = {
   },
   plugins: {
     SplashScreen: {
-      launchShowDuration: 3000,
-      launchAutoHide: true,
-      backgroundColor: "#ffffffff",
-      androidSplashResourceName: "splash",
-      androidScaleType: "CENTER_CROP",
-      showSpinner: true,
-      androidSpinnerStyle: "large",
-      iosSpinnerStyle: "small",
-      spinnerColor: "#999999"
+      launchShowDuration: 2000,
+      backgroundColor: '#ff6b35',
+      showSpinner: false,
+      androidSplashResourceName: 'splash',
+      androidScaleType: 'CENTER_CROP'
+    },
+    StatusBar: {
+      style: 'dark',
+      backgroundColor: '#ff6b35'
+    },
+    Keyboard: {
+      resize: 'body',
+      style: 'dark',
+      resizeOnFullScreen: true
     }
   }
 };
