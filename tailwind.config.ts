@@ -27,7 +27,8 @@ export default {
 				foreground: 'hsl(var(--foreground))',
 				primary: {
 					DEFAULT: 'hsl(var(--primary))',
-					foreground: 'hsl(var(--primary-foreground))'
+					foreground: 'hsl(var(--primary-foreground))',
+					glow: 'hsl(var(--primary-glow))',
 				},
 				secondary: {
 					DEFAULT: 'hsl(var(--secondary))',
@@ -62,12 +63,27 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				// SpeedySpoon specific colors
+				'red-primary': 'hsl(0 72% 51%)',
+				'red-accent': 'hsl(0 84% 60%)',
+				'black-primary': 'hsl(0 0% 8%)',
+				'black-secondary': 'hsl(0 0% 15%)',
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',
 				sm: 'calc(var(--radius) - 4px)'
+			},
+			backgroundImage: {
+				'gradient-primary': 'linear-gradient(135deg, hsl(0 72% 51%), hsl(0 84% 60%))',
+				'gradient-dark': 'linear-gradient(180deg, hsl(0 0% 8%), hsl(0 0% 5%))',
+				'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+				'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
+			},
+			boxShadow: {
+				'red': '0 10px 30px -10px hsl(0 72% 51% / 0.3)',
+				'glow': '0 0 40px hsl(0 84% 60% / 0.4)',
 			},
 			keyframes: {
 				'accordion-down': {
@@ -104,12 +120,12 @@ export default {
 						transform: 'translateX(0)'
 					}
 				},
-				'pulse-glow': {
+				'glow-pulse': {
 					'0%, 100%': {
-						boxShadow: '0 0 0 0 rgba(239, 68, 68, 0.7)'
+						boxShadow: '0 0 20px hsl(0 72% 51% / 0.5)'
 					},
 					'50%': {
-						boxShadow: '0 0 0 10px rgba(239, 68, 68, 0)'
+						boxShadow: '0 0 30px hsl(0 84% 60% / 0.8)'
 					}
 				}
 			},
@@ -118,12 +134,8 @@ export default {
 				'accordion-up': 'accordion-up 0.2s ease-out',
 				'fade-in': 'fade-in 0.3s ease-out',
 				'slide-in': 'slide-in 0.3s ease-out',
-				'pulse-glow': 'pulse-glow 2s infinite'
+				'glow-pulse': 'glow-pulse 2s ease-in-out infinite'
 			},
-			backgroundImage: {
-				'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-				'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
-			}
 		}
 	},
 	plugins: [require("tailwindcss-animate")],
