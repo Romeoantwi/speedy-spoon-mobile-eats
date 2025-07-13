@@ -188,16 +188,6 @@ const Customer = () => {
                   <Zap className="w-5 h-5 mr-2" />
                   Sign In to Continue
                 </Button>
-                <div className="glass-effect rounded-lg p-4">
-                  <p className="text-gray-300 text-sm">
-                    🚚 <span className="font-semibold">Delivery Fees:</span>
-                  </p>
-                  <div className="text-xs text-gray-400 mt-2 space-y-1">
-                    <p>1 item: {formatCurrencyShort(5)} • 2 items: {formatCurrencyShort(8)}</p>
-                    <p>3 items: {formatCurrencyShort(12)} • 4 items: {formatCurrencyShort(16)}</p>
-                    <p>5 items: {formatCurrencyShort(20)} (Max 5 items per order)</p>
-                  </div>
-                </div>
               </CardContent>
             </Card>
           </div>
@@ -236,16 +226,6 @@ const Customer = () => {
           <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-8">
             Experience the finest Ghanaian cuisine delivered to your doorstep with lightning speed
           </p>
-          <div className="glass-effect rounded-lg p-4 inline-block">
-            <p className="text-gray-300 text-sm">
-              🚚 <span className="font-semibold">Delivery Fees:</span>
-            </p>
-            <div className="text-xs text-gray-400 mt-2 space-y-1">
-              <p>1 item: {formatCurrencyShort(5)} • 2 items: {formatCurrencyShort(8)}</p>
-              <p>3 items: {formatCurrencyShort(12)} • 4 items: {formatCurrencyShort(16)}</p>
-              <p>5 items: {formatCurrencyShort(20)} <span className="text-orange-400">(Max 5 items per order)</span></p>
-            </div>
-          </div>
         </div>
 
         <MenuSection onAddToCart={addToCart} />
