@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { X, Plus, Minus, ShoppingCart } from "lucide-react";
+import { X, Plus, Minus, ShoppingCart, ArrowLeft, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FoodItem, CustomizationOption, SpiceLevel } from "@/types/food";
 
@@ -62,7 +62,7 @@ const FoodDetailsModal = ({ item, isOpen, onClose, onAddToCart }: FoodDetailsMod
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-card rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto border border-border">
         <div className="relative">
           <img
             src={item.image}
@@ -73,23 +73,35 @@ const FoodDetailsModal = ({ item, isOpen, onClose, onAddToCart }: FoodDetailsMod
             onClick={onClose}
             variant="ghost"
             size="icon"
-            className="absolute top-4 right-4 bg-white hover:bg-gray-100 rounded-full"
+            className="absolute top-4 left-4 bg-black/60 hover:bg-black/80 rounded-full"
           >
-            <X className="w-5 h-5" />
+            <ArrowLeft className="w-5 h-5 text-white" />
+          </Button>
+          <Button
+            onClick={onClose}
+            variant="ghost"
+            size="icon"
+            className="absolute top-4 right-4 bg-black/60 hover:bg-black/80 rounded-full"
+          >
+            <X className="w-5 h-5 text-white" />
           </Button>
         </div>
 
         <div className="p-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">{item.name}</h2>
-          <p className="text-gray-600 mb-4">{item.description}</p>
-          <div className="mb-4">
-            <p className="text-xl font-bold text-orange-600">₵{item.price}</p>
+          <h2 className="text-2xl font-bold text-foreground mb-2">{item.name}</h2>
+          <p className="text-muted-foreground mb-4">{item.description}</p>
+          <div className="mb-4 flex items-center justify-between">
+            <p className="text-xl font-bold text-primary">₵{item.price}</p>
+            <div className="flex items-center space-x-1 bg-primary/10 rounded-full px-2 py-1">
+              <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+              <span className="text-sm font-medium text-foreground">{item.rating}</span>
+            </div>
           </div>
 
           {/* Spice Level Selection */}
           {item.hasSpiceLevels && (
             <div className="mb-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-3">
+              <h3 className="text-lg font-semibold text-foreground mb-3">
                 Choose Spice Level
               </h3>
               <div className="grid grid-cols-2 gap-2">
@@ -98,13 +110,13 @@ const FoodDetailsModal = ({ item, isOpen, onClose, onAddToCart }: FoodDetailsMod
                     key={level}
                     className={`flex items-center justify-center p-3 border rounded-lg cursor-pointer transition-all ${
                       selectedSpiceLevel === level
-                        ? 'bg-orange-50 border-orange-200 ring-2 ring-orange-500'
-                        : 'hover:bg-gray-50 border-gray-200'
+                        ? 'bg-primary/10 border-primary/20 ring-2 ring-primary'
+                        : 'hover:bg-secondary border-border'
                     }`}
                     onClick={() => setSelectedSpiceLevel(level)}
                   >
                     <span className="text-lg mr-2">{emoji}</span>
-                    <span className="font-medium text-gray-800">{label}</span>
+                    <span className="font-medium text-foreground">{label}</span>
                   </div>
                 ))}
               </div>
@@ -114,7 +126,7 @@ const FoodDetailsModal = ({ item, isOpen, onClose, onAddToCart }: FoodDetailsMod
           {/* Extras Section */}
           {item.customizations && item.customizations.length > 0 && (
             <div className="mb-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-3">
+              <h3 className="text-lg font-semibold text-foreground mb-3">
                 Add Extras
               </h3>
               <div className="space-y-3">
@@ -126,16 +138,16 @@ const FoodDetailsModal = ({ item, isOpen, onClose, onAddToCart }: FoodDetailsMod
                       key={customization.id}
                       className={`flex items-center justify-between p-3 border rounded-lg cursor-pointer transition-all ${
                         isSelected 
-                          ? 'bg-orange-50 border-orange-200 ring-2 ring-orange-500' 
-                          : 'hover:bg-gray-50 border-gray-200'
+                          ? 'bg-primary/10 border-primary/20 ring-2 ring-primary' 
+                          : 'hover:bg-secondary border-border'
                       }`}
                       onClick={() => handleCustomizationToggle(customization)}
                     >
                       <div className="flex items-center space-x-3">
                         <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
                           isSelected 
-                            ? 'bg-orange-500 border-orange-500' 
-                            : 'border-gray-300'
+                            ? 'bg-primary border-primary' 
+                            : 'border-border'
                         }`}>
                           {isSelected && (
                             <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -143,9 +155,9 @@ const FoodDetailsModal = ({ item, isOpen, onClose, onAddToCart }: FoodDetailsMod
                             </svg>
                           )}
                         </div>
-                        <span className="font-medium text-gray-800">{customization.name}</span>
+                        <span className="font-medium text-foreground">{customization.name}</span>
                       </div>
-                      <span className="text-orange-600 font-semibold">
+                      <span className="text-primary font-semibold">
                         +₵{customization.price}
                       </span>
                     </div>
@@ -157,8 +169,8 @@ const FoodDetailsModal = ({ item, isOpen, onClose, onAddToCart }: FoodDetailsMod
 
           {/* Selected Extras Summary */}
           {selectedCustomizations.length > 0 && (
-            <div className="mb-4 p-3 bg-orange-50 rounded-lg">
-              <h4 className="font-medium text-gray-800 mb-2">Selected Extras:</h4>
+            <div className="mb-4 p-3 bg-primary/5 rounded-lg border border-primary/10">
+              <h4 className="font-medium text-foreground mb-2">Selected Extras:</h4>
               <div className="space-y-1">
                 {selectedCustomizations.map((custom) => (
                   <div key={custom.id} className="flex justify-between text-sm">
@@ -197,7 +209,7 @@ const FoodDetailsModal = ({ item, isOpen, onClose, onAddToCart }: FoodDetailsMod
           {/* Add to Cart Button */}
           <Button
             onClick={handleAddToCart}
-            className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 text-lg"
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-3 text-lg"
           >
             <ShoppingCart className="w-5 h-5 mr-2" />
             Add to Cart - ₵{getTotalPrice().toFixed(2)}

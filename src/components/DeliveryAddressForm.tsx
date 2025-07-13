@@ -5,7 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { MapPin } from 'lucide-react';
 
 interface DeliveryAddressFormProps {
-  onAddressSubmit: (address: string) => void;
+  onAddressSubmit: (address: string, allergies?: string) => void;
   onCancel: () => void;
 }
 
@@ -14,12 +14,13 @@ const DeliveryAddressForm = ({ onAddressSubmit, onCancel }: DeliveryAddressFormP
   const [city, setCity] = useState('Ho');
   const [region, setRegion] = useState('Volta Region');
   const [landmarks, setLandmarks] = useState('');
+  const [allergies, setAllergies] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (streetAddress.trim()) {
       const fullAddress = `${streetAddress}, ${city}, ${region}${landmarks ? `\nLandmarks: ${landmarks}` : ''}`;
-      onAddressSubmit(fullAddress);
+      onAddressSubmit(fullAddress, allergies);
     }
   };
 
@@ -83,6 +84,20 @@ const DeliveryAddressForm = ({ onAddressSubmit, onCancel }: DeliveryAddressFormP
                 placeholder="Building names, nearby shops, distinctive features..."
                 className="w-full"
                 rows={3}
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="allergies" className="block text-sm font-medium text-gray-700 mb-2">
+                Allergies / Special Dietary Requirements
+              </label>
+              <Textarea
+                id="allergies"
+                value={allergies}
+                onChange={(e) => setAllergies(e.target.value)}
+                placeholder="Please specify any allergies or dietary requirements..."
+                className="w-full"
+                rows={2}
               />
             </div>
             

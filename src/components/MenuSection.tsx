@@ -32,7 +32,7 @@ const menuData: MenuCategory[] = [
           { id: "egg1", name: "Egg", price: 4, category: "extra" },
           { id: "chicken1", name: "Extra Chicken", price: 15, category: "extra" },
           { id: "gizzard1", name: "Gizzard", price: 10, category: "extra" },
-          { id: "plantain1", name: "Fried Plantain (3 pieces)", price: 5, category: "extra" }
+          { id: "plantain1", name: "Fried Plantain", price: 5, category: "extra" }
         ]
       },
       {
@@ -49,7 +49,7 @@ const menuData: MenuCategory[] = [
           { id: "egg2", name: "Egg", price: 4, category: "extra" },
           { id: "fish2", name: "Extra Fish", price: 15, category: "extra" },
           { id: "shito2", name: "Extra Shito", price: 3, category: "extra" },
-          { id: "plantain2", name: "Fried Plantain (3 pieces)", price: 5, category: "extra" }
+          { id: "plantain2", name: "Fried Plantain", price: 5, category: "extra" }
         ]
       },
       {

@@ -67,7 +67,7 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total, de
     setPendingOrderData(null);
   };
 
-  const handleAddressSubmit = async (address: string) => {
+  const handleAddressSubmit = async (address: string, allergies?: string) => {
     if (!user) return;
 
     try {
@@ -86,7 +86,7 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total, de
       }
 
       // Store order data for after payment
-      const orderData = { items, address };
+      const orderData = { items, address, allergies };
       setPendingOrderData(orderData);
 
       // Process payment first
