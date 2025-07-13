@@ -39,14 +39,14 @@ const AdminSetup = () => {
     setLoading(true);
 
     try {
-      // First, try to upsert the profile to ensure it exists
+      // Update the profile to admin status
       const { error: profileError } = await supabase
         .from('profiles')
-        .upsert({
-          id: user.id,
+        .update({
           user_type: 'admin',
           full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Admin User'
-        });
+        })
+        .eq('id', user.id);
 
       if (profileError) {
         console.error('Profile upsert error:', profileError);
