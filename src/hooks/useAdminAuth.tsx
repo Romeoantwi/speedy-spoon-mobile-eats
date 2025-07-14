@@ -43,8 +43,8 @@ export const AdminProvider = ({ children }: { children: React.ReactNode }) => {
         const { data, error } = await supabase
           .from('profiles')
           .select('*')
-          .eq('id', user.id)
-          .eq('user_type', 'admin')
+          .eq('id', user.id as any)
+          .eq('user_type', 'admin' as any)
           .single();
 
         if (mounted) {

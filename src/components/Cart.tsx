@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { X, Minus, Plus, ShoppingBag, CreditCard, Loader2, Clock, Check } from "lucide-react";
+import { X, Minus, Plus, ShoppingBag, CreditCard, Loader2, Clock, Check, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { CartItem } from "@/types/food";
@@ -181,6 +181,15 @@ const Cart = ({ items, isOpen, onClose, onUpdateQuantity, onClearCart, total, de
             )}
           </h2>
           <div className="flex items-center gap-2">
+            <Button
+              onClick={onClose}
+              variant="ghost"
+              size="icon"
+              className="hover:bg-gray-100"
+              disabled={isProcessingOrder}
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
             {(currentOrder || recentOrders.length > 0) && !showOrderHistory && (
               <Button
                 onClick={() => setShowOrderHistory(true)}

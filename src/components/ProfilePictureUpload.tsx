@@ -51,8 +51,8 @@ const ProfilePictureUpload = ({ currentAvatarUrl, onAvatarUpdate, size = 'md' }:
       // Update user profile
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ avatar_url: data.publicUrl })
-        .eq('id', user.id);
+        .update({ avatar_url: data.publicUrl } as any)
+        .eq('id', user.id as any);
 
       if (updateError) throw updateError;
 

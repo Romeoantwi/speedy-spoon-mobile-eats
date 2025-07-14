@@ -61,7 +61,7 @@ export const createOrderAfterPayment = async (
         payment_status: 'paid', // Payment already successful
         payment_method: 'paystack',
         paystack_reference: paymentReference,
-      })
+      } as any)
       .select()
       .single();
 
@@ -71,12 +71,12 @@ export const createOrderAfterPayment = async (
     }
 
     const newOrder: Order = {
-      ...orderData,
-      items: (typeof orderData.items === 'string' 
-        ? JSON.parse(orderData.items) 
-        : orderData.items) as unknown as OrderItem[],
-      status: orderData.status as Order['status'],
-      payment_status: orderData.payment_status as Order['payment_status'],
+      ...(orderData as any),
+      items: (typeof (orderData as any).items === 'string' 
+        ? JSON.parse((orderData as any).items) 
+        : (orderData as any).items) as unknown as OrderItem[],
+      status: (orderData as any).status as Order['status'],
+      payment_status: (orderData as any).payment_status as Order['payment_status'],
     };
 
     setCurrentOrder(newOrder);

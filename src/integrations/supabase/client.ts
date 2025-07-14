@@ -18,7 +18,7 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     storageKey: 'supabase.auth.token',
     flowType: 'pkce',
     debug: false,
-    lock: true // Prevent concurrent auth operations
+    // lock: true // Prevent concurrent auth operations
   },
   global: {
     headers: {

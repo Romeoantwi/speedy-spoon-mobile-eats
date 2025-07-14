@@ -15,7 +15,7 @@ export const loadActiveOrder = async (
     const { data: orderData, error } = await supabase
       .from('orders')
       .select('*')
-      .eq('id', storedOrderId)
+      .eq('id', storedOrderId as any)
       .single();
 
     if (error) {
@@ -25,15 +25,15 @@ export const loadActiveOrder = async (
     }
 
     if (orderData) {
-      const parsedItems = typeof orderData.items === 'string'
-        ? JSON.parse(orderData.items)
-        : orderData.items;
+      const parsedItems = typeof (orderData as any).items === 'string'
+        ? JSON.parse((orderData as any).items)
+        : (orderData as any).items;
 
       const loadedOrder: Order = {
-        ...orderData,
+        ...(orderData as any),
         items: parsedItems as unknown as OrderItem[],
-        status: orderData.status as Order['status'],
-        payment_status: orderData.payment_status as Order['payment_status'],
+        status: (orderData as any).status as Order['status'],
+        payment_status: (orderData as any).payment_status as Order['payment_status'],
       };
 
       // Only track active orders

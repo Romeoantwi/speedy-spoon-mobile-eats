@@ -78,11 +78,11 @@ const RestaurantDashboard = () => {
             const { data: customerProfile } = await supabase
               .from('profiles')
               .select('full_name')
-              .eq('id', order.customer_id)
+              .eq('id', order.customer_id as any)
               .single();
             
             if (customerProfile) {
-              enrichedOrder.customer_name = customerProfile.full_name || 'N/A';
+              enrichedOrder.customer_name = (customerProfile as any).full_name || 'N/A';
             }
           } catch (error) {
             console.log('Customer profile not found for order:', order.id);

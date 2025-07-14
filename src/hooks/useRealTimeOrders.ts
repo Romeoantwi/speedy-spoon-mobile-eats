@@ -74,7 +74,7 @@ export const useRealTimeOrders = (userType: 'restaurant' | 'driver' | 'customer'
       } else if (userType === 'customer') {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-          query = query.eq('customer_id', user.id);
+          query = query.eq('customer_id', user.id as any);
         }
       }
 
@@ -83,9 +83,9 @@ export const useRealTimeOrders = (userType: 'restaurant' | 'driver' | 'customer'
       if (error) throw error;
 
       const parsedOrders = (data || []).map(order => ({
-        ...order,
-        items: typeof order.items === 'string' ? JSON.parse(order.items) : order.items,
-        status: order.status as Order['status']
+        ...(order as any),
+        items: typeof (order as any).items === 'string' ? JSON.parse((order as any).items) : (order as any).items,
+        status: (order as any).status as Order['status']
       })) as Order[];
 
       setOrders(parsedOrders);
@@ -100,8 +100,8 @@ export const useRealTimeOrders = (userType: 'restaurant' | 'driver' | 'customer'
     try {
       const { error } = await supabase
         .from('orders')
-        .update({ status: newStatus })
-        .eq('id', orderId);
+        .update({ status: newStatus } as any)
+        .eq('id', orderId as any);
 
       if (error) throw error;
       

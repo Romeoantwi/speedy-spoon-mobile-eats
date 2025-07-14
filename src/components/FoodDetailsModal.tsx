@@ -13,40 +13,47 @@ interface FoodDetailsModalProps {
 
 const FoodDetailsModal = ({ item, isOpen, onClose, onAddToCart }: FoodDetailsModalProps) => {
   const [quantity, setQuantity] = useState(1);
-  const [selectedCustomizations, setSelectedCustomizations] = useState<CustomizationOption[]>([]);
+  const [selectedCustomizations, setSelectedCustomizations] = useState<{ customization: CustomizationOption; quantity: number }[]>([]);
   const [selectedSpiceLevel, setSelectedSpiceLevel] = useState<SpiceLevel>('mild');
 
   if (!isOpen || !item) return null;
 
-  const handleCustomizationToggle = (customization: CustomizationOption) => {
-    console.log('Toggling customization:', customization);
+  const handleCustomizationQuantityChange = (customization: CustomizationOption, quantity: number) => {
+    console.log('Changing customization quantity:', customization, quantity);
     
     setSelectedCustomizations(prev => {
-      const exists = prev.find(c => c.id === customization.id);
-      let newCustomizations;
+      const existingIndex = prev.findIndex(c => c.customization.id === customization.id);
       
-      if (exists) {
-        newCustomizations = prev.filter(c => c.id !== customization.id);
-        console.log('Removed customization:', customization.name);
-      } else {
-        newCustomizations = [...prev, customization];
-        console.log('Added customization:', customization.name);
+      if (quantity === 0) {
+        // Remove if quantity is 0
+        return prev.filter(c => c.customization.id !== customization.id);
       }
       
-      console.log('New customizations:', newCustomizations);
-      return newCustomizations;
+      if (existingIndex >= 0) {
+        // Update existing quantity
+        const newCustomizations = [...prev];
+        newCustomizations[existingIndex] = { customization, quantity };
+        return newCustomizations;
+      } else {
+        // Add new customization
+        return [...prev, { customization, quantity }];
+      }
     });
   };
 
   const getTotalPrice = () => {
-    const customizationPrice = selectedCustomizations.reduce((total, c) => total + c.price, 0);
+    const customizationPrice = selectedCustomizations.reduce((total, c) => total + (c.customization.price * c.quantity), 0);
     return (item.price + customizationPrice) * quantity;
   };
 
   const handleAddToCart = () => {
     console.log('Adding to cart with customizations:', selectedCustomizations);
     console.log('Selected spice level:', selectedSpiceLevel);
-    onAddToCart(item, selectedCustomizations, quantity, item.hasSpiceLevels ? selectedSpiceLevel : undefined);
+    // Convert back to flat array for compatibility
+    const flatCustomizations = selectedCustomizations.flatMap(c => 
+      Array(c.quantity).fill(c.customization)
+    );
+    onAddToCart(item, flatCustomizations, quantity, item.hasSpiceLevels ? selectedSpiceLevel : undefined);
     onClose();
     setQuantity(1);
     setSelectedCustomizations([]);
@@ -131,35 +138,39 @@ const FoodDetailsModal = ({ item, isOpen, onClose, onAddToCart }: FoodDetailsMod
               </h3>
               <div className="space-y-3">
                 {item.customizations.map((customization) => {
-                  const isSelected = selectedCustomizations.some(c => c.id === customization.id);
+                  const selectedItem = selectedCustomizations.find(c => c.customization.id === customization.id);
+                  const currentQuantity = selectedItem?.quantity || 0;
                   
                   return (
                     <div
                       key={customization.id}
-                      className={`flex items-center justify-between p-3 border rounded-lg cursor-pointer transition-all ${
-                        isSelected 
-                          ? 'bg-primary/10 border-primary/20 ring-2 ring-primary' 
-                          : 'hover:bg-secondary border-border'
-                      }`}
-                      onClick={() => handleCustomizationToggle(customization)}
+                      className="flex items-center justify-between p-3 border rounded-lg transition-all hover:bg-secondary border-border"
                     >
-                      <div className="flex items-center space-x-3">
-                        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
-                          isSelected 
-                            ? 'bg-primary border-primary' 
-                            : 'border-border'
-                        }`}>
-                          {isSelected && (
-                            <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                            </svg>
-                          )}
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="font-medium text-foreground">{customization.name}</span>
+                          <span className="text-primary font-semibold">₵{customization.price}</span>
                         </div>
-                        <span className="font-medium text-foreground">{customization.name}</span>
+                        <div className="flex items-center space-x-3">
+                          <Button
+                            onClick={() => handleCustomizationQuantityChange(customization, Math.max(0, currentQuantity - 1))}
+                            variant="outline"
+                            size="icon"
+                            className="w-8 h-8"
+                          >
+                            <Minus className="w-3 h-3" />
+                          </Button>
+                          <span className="text-lg font-semibold w-8 text-center">{currentQuantity}</span>
+                          <Button
+                            onClick={() => handleCustomizationQuantityChange(customization, currentQuantity + 1)}
+                            variant="outline"
+                            size="icon"
+                            className="w-8 h-8"
+                          >
+                            <Plus className="w-3 h-3" />
+                          </Button>
+                        </div>
                       </div>
-                      <span className="text-primary font-semibold">
-                        +₵{customization.price}
-                      </span>
                     </div>
                   );
                 })}
@@ -173,9 +184,9 @@ const FoodDetailsModal = ({ item, isOpen, onClose, onAddToCart }: FoodDetailsMod
               <h4 className="font-medium text-foreground mb-2">Selected Extras:</h4>
               <div className="space-y-1">
                 {selectedCustomizations.map((custom) => (
-                  <div key={custom.id} className="flex justify-between text-sm">
-                    <span>{custom.name}</span>
-                    <span>+₵{custom.price}</span>
+                  <div key={custom.customization.id} className="flex justify-between text-sm">
+                    <span>{custom.customization.name} x{custom.quantity}</span>
+                    <span>+₵{(custom.customization.price * custom.quantity).toFixed(2)}</span>
                   </div>
                 ))}
               </div>

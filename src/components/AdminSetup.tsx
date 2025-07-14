@@ -45,8 +45,8 @@ const AdminSetup = () => {
         .update({
           user_type: 'admin',
           full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Admin User'
-        })
-        .eq('id', user.id);
+        } as any)
+        .eq('id', user.id as any);
 
       if (profileError) {
         console.error('Profile upsert error:', profileError);

@@ -51,7 +51,7 @@ const AdminLogin = () => {
             id: data.user.id,
             user_type: 'admin',
             full_name: data.user.user_metadata?.full_name || formData.email.split('@')[0]
-          });
+          } as any);
 
         if (profileError) {
           console.error('Profile update error:', profileError);
